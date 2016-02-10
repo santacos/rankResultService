@@ -1,4 +1,4 @@
-name := "retrieveModelService"
+name := "ResultRankingService"
 
 version := "1.0"
 
