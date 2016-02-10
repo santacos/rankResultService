@@ -22,7 +22,8 @@ object ResultRankingService extends App with Route {
       config.getString("http.interface"),
       config.getInt("http.port"))
 
-  println(s"server online at http://localhost:8080/\nPress RETURN to stop...")
+  println(s"server online at http://${config.getString("http.interface")}:${config.getInt("http.port")}")
+  println("Press RETURN to stop...")
   StdIn.readLine()
   bindingFuture
     .flatMap(_.unbind())
