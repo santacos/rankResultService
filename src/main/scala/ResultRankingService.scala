@@ -9,7 +9,7 @@ import com.typesafe.config.ConfigFactory
 /**
   * Created by santacos on 2/9/2016 AD.
   */
-object ModelService extends App with Route {
+object ResultRankingService extends App with Route {
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
   implicit val ec = system.dispatcher

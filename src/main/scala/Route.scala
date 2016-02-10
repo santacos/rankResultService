@@ -6,11 +6,11 @@ trait Route extends JsonSupport{
       post {
         entity(as[NonPersonalizedSearchResult]) { nonPersonalizedSearchResult =>
           complete{
-            //PersonalizedSearchResult(nonPersonalizedSearchResult.items)
-            (new SearchResultPersonalizer).personalize(nonPersonalizedSearchResult)
+            val personalizer = new SearchResultPersonalizer
+            personalizer.personalize(nonPersonalizedSearchResult)
           }
         }
       }
-  }
+    }
 }
 
