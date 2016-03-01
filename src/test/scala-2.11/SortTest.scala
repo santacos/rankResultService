@@ -1,3 +1,4 @@
+import IdType.{ItemId, UserId}
 import org.scalatest.FunSuite
 
 /**
@@ -30,7 +31,26 @@ class SortTest extends FunSuite{
     testRankResult(List(0 to 100:_*),List(0 to 10000:_*).reverse,List(0 to 100:_*).reverse)
   }
 
-  test("")
+  test("return recommended items for user"){
+    val personalizer = new SearchResultPersonalizer
+    val userId = 2
+    val count = 1000
+    val expectedItem = 932
+    assert(personalizer.recommendItems(userId,count).contains(expectedItem))
+  }
+
+  def testPersonalize(userId: UserId, filteredItems: List[ItemId], expectedItems: List[ItemId]) = {
+    val personalizer = new SearchResultPersonalizer
+    assert(personalizer.personalize(NonPersonalizedSearchResult(userId,filteredItems)).items == expectedItems)
+  }
+
+  test("Personalize function"){
+    testPersonalize(30263,List(12454,19806,4577,1111,7174),List(1111,7174,12454,4577,19806).reverse)
+  }
+
+  test("Personalize function if filteredItem is unknown"){
+    testPersonalize(30263,List(1111,2222,3333,4444,5555),List(1111,2222,3333,4444,5555))
+  }
 }
 
 
