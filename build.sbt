@@ -6,8 +6,8 @@ scalaVersion := "2.11.7"
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
 libraryDependencies ++= {
-  val akkaV       = "2.4.1"
-  val akkaStreamV = "2.0.1"
+  val akkaV       = "2.3.14"
+  val akkaStreamV = "2.0.3"
   val scalaTestV  = "2.2.5"
   Seq(
     "com.typesafe.akka" %% "akka-actor"                           % akkaV,
@@ -18,8 +18,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-testkit-experimental"       % akkaStreamV,
     "org.apache.spark"  %% "spark-core"                           % "1.6.0",
     "org.apache.spark"  %% "spark-mllib"                          % "1.6.0",
-    "org.scalatest"     %% "scalatest"                            % scalaTestV % "test"
-
+    "org.scalatest"     %% "scalatest"                            % scalaTestV % "test",
+    "org.scalamock"     %% "scalamock-scalatest-support"          % "3.2.2" % "test"
   )
 }
-    
