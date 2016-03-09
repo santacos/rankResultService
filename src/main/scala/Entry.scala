@@ -4,6 +4,8 @@ import org.apache.spark.{SparkConf, SparkContext}
   * Created by ibosz on 4/3/59.
   */
 object Entry extends App {
+  System.setProperty("SPARK_YARN_MODE", "true")
+
   val sparkConfig = new SparkConf()
     .setAppName("test")
     .setMaster("yarn-client")
