@@ -1,4 +1,4 @@
-package service.searchranking.recmodel
+package service.ml.model
 
 import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
 import org.apache.spark.rdd.RDD

@@ -1,4 +1,4 @@
-package service.searchranking.recmodel
+package service.ml.model
 
 import org.apache.spark.rdd.RDD
 import org.scalatest.Matchers
@@ -24,7 +24,7 @@ class MatrixFactorizationRecommendationModelTest extends FunSuiteSpark with Matc
     new MatrixFactorizationRecommendationModel(rank, userFeatures, prodFeatures)
 
   test("check if user is available") {
-    matrixFactorizationRecommendationModel.isUserAvailable(1) should be(true)
-    matrixFactorizationRecommendationModel.isUserAvailable(3) should be(false)
+    matrixFactorizationRecommendationModel.isUserAvailable(1) should be (true)
+    matrixFactorizationRecommendationModel.isUserAvailable(3) should be (false)
   }
 }

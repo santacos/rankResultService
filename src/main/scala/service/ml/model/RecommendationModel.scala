@@ -1,4 +1,4 @@
-package service.searchranking.recmodel
+package service.ml.model
 
 /**
   * Created by ibosz on 7/3/59.

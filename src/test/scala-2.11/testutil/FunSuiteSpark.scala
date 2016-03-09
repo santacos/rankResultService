@@ -1,6 +1,7 @@
 package testutil
 
-import org.apache.spark.{SparkContext, SparkConf}
+import org.apache.spark.sql.SQLContext
+import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.FunSuite
 
 /**
@@ -10,8 +11,9 @@ class FunSuiteSpark extends FunSuite
 
 object FunSuiteSpark {
   private lazy val sparkConfig = new SparkConf()
-    .setAppName("test")
-    .setMaster("local")
+      .setAppName("test")
+      .setMaster("local")
 
   lazy val sparkContext = new SparkContext(sparkConfig)
+  lazy val sqlContext = new SQLContext(sparkContext)
 }

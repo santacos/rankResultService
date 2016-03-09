@@ -1,6 +1,6 @@
 package service.searchranking
 
-import service.searchranking.recmodel.RecommendationModel
+import service.ml.model.RecommendationModel
 
 import scala.util.Try
 

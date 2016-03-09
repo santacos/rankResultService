@@ -2,7 +2,7 @@ package service.searchranking
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FunSuite, Matchers}
-import service.searchranking.recmodel.RecommendationModel
+import service.ml.model.RecommendationModel
 
 import scala.util.Try
 
@@ -18,7 +18,7 @@ class SearchResultRankerTest extends FunSuite with Matchers with MockFactory {
     val ranker = new SearchResultRanker(recommendationModelStub)
     val user = 1
     val items: List[Int] = List()
-    ranker.rank(user, items) should be(Try(List()))
+    ranker.rank(user, items) should be (Try(List()))
   }
 
   test("rank should return list of ranked items for the user") {
@@ -32,7 +32,7 @@ class SearchResultRankerTest extends FunSuite with Matchers with MockFactory {
     val ranker = new SearchResultRanker(recommendationModelStub)
     val user = 1
     val items: List[Int] = List(1, 2, 3, 4)
-    ranker.rank(user, items) should be(Try(List(4, 3, 2, 1)))
+    ranker.rank(user, items) should be (Try(List(4, 3, 2, 1)))
   }
 
   test("return UserNotFoundException when can not find user in model") {
@@ -45,4 +45,5 @@ class SearchResultRankerTest extends FunSuite with Matchers with MockFactory {
       Try(throw new UserNotFoundException(s"user $user is not available in the model"))
     }
   }
+
 }
