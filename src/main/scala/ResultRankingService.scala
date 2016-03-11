@@ -1,9 +1,6 @@
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
-import scala.concurrent.Future
-import scala.io.StdIn
-import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
 /**
@@ -24,10 +21,14 @@ object ResultRankingService extends App with Route {
 
   println(s"server online at http://${config.getString("http.interface")}:${config.getInt("http.port")}")
   println("Press RETURN to stop...")
-  StdIn.readLine()
+
+  while(true) {}
+
+  println("========= stop ========")
+
   bindingFuture
     .flatMap(_.unbind())
-    .onComplete(_ => system.terminate())
+    .onComplete(_ => system.shutdown())
 
 }
 

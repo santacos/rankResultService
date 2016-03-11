@@ -17,8 +17,10 @@ class SearchResultPersonalizer {
   }
 
   def personalize(nonPersonalizedSearchResult: NonPersonalizedSearchResult): PersonalizedSearchResult = {
-    val ranks = rankResult(nonPersonalizedSearchResult.items,recommendItems(nonPersonalizedSearchResult.user,1000))
-    PersonalizedSearchResult(ranks)
+//    val ranks = rankResult(nonPersonalizedSearchResult.items,recommendItems(nonPersonalizedSearchResult.user,1000))
+//    PersonalizedSearchResult(ranks)
+    val p = sparkContext.parallelize(List(1, 2, 3, 4))
+    PersonalizedSearchResult(p.collect().toList)
   }
 }
 
