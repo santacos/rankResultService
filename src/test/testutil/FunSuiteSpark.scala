@@ -1,5 +1,6 @@
 package testutil
 
+import org.apache.spark.sql.SQLContext
 import org.apache.spark.{SparkContext, SparkConf}
 import org.scalatest.FunSuite
 
@@ -14,4 +15,5 @@ object FunSuiteSpark {
     .setMaster("local")
 
   lazy val sparkContext = new SparkContext(sparkConfig)
+  lazy val sqlContext = new SQLContext(sparkContext)
 }
