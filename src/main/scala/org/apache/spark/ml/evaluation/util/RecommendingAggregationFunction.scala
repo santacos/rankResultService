@@ -40,46 +40,24 @@ class RecommendingAggregationFunction(
 
   override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
     val currentRecommendations = buffer.getAs[mutable.WrappedArray[Row]](0)
-
     val currentRecommendationCount = currentRecommendations.length
 
-    if(currentRecommendations.isEmpty) {
+    val isCurrentCountLessThanNumRecommendation = currentRecommendationCount < numRecommendation
+
+    if(currentRecommendations.isEmpty || isCurrentCountLessThanNumRecommendation) {
       buffer(0) = currentRecommendations :+ input
-      return
-    }
+    } else {
+      val worstRecommendationWithIndex = findWorstRecommendationWithIndex(currentRecommendations)
+      val foundBetterRecommendation = isBetterRecommendation(worstRecommendationWithIndex, input)
 
-    def worseRecommendationReducer(worstSoFar: (Row, Int), pointing: (Row, Int)) =
-      (worstSoFar, pointing) match {
-        case ((Row(_, worstSoFarPrediction: Double), _), (Row(_, pointingPrediction: Double), _)) =>
-          if (pointingPrediction < worstSoFarPrediction)
-            pointing
-          else
-            worstSoFar
-      }
-
-    val worstRecommendation: (Row, Int) = currentRecommendations
-      .zipWithIndex
-      .reduce(worseRecommendationReducer)
-
-    val lessThanNumRecommendation = currentRecommendationCount < numRecommendation
-    val foundBetterRecommendation = {
-      val inputPrediction = input match { case Row(_, prediction: Double) => prediction }
-      val currentWorstPrediction = worstRecommendation match {
-        case (Row(_, prediction: Double), _) => prediction
-      }
-
-      inputPrediction > currentWorstPrediction
-    }
-
-    if(lessThanNumRecommendation) {
-      buffer(0) = currentRecommendations :+ input
-    } else if(foundBetterRecommendation) {
-      val worstRecommendationIndex = worstRecommendation match {
-        case (_, index) => index
-      }
-      buffer(0) = {
-        currentRecommendations(worstRecommendationIndex) = input
-        currentRecommendations
+     if(foundBetterRecommendation) {
+        val worstRecommendationIndex = worstRecommendationWithIndex match {
+          case (_, index) => index
+        }
+        buffer(0) = {
+          currentRecommendations(worstRecommendationIndex) = input
+          currentRecommendations
+        }
       }
     }
   }
@@ -101,4 +79,30 @@ class RecommendingAggregationFunction(
     buffer.getAs[mutable.WrappedArray[Row]](0)
       .map { case Row(item, _) => item }
 
+
+  // helper functions
+
+  private def findWorstRecommendationWithIndex(currentRecommendations: Seq[Row]): (Row, Int) = {
+    def worseRecommendationReducer(worstSoFar: (Row, Int), pointing: (Row, Int)) =
+      (worstSoFar, pointing) match {
+        case ((Row(_, worstSoFarPrediction: Double), _), (Row(_, pointingPrediction: Double), _)) =>
+          if (pointingPrediction < worstSoFarPrediction)
+            pointing
+          else
+            worstSoFar
+      }
+
+    currentRecommendations
+      .zipWithIndex
+      .reduce(worseRecommendationReducer)
+  }
+
+  private def isBetterRecommendation(worstRecommendation: (Row, Int), input: Row) = {
+    val inputPrediction = input match { case Row(_, prediction: Double) => prediction }
+    val currentWorstPrediction = worstRecommendation match {
+      case (Row(_, prediction: Double), _) => prediction
+    }
+
+    inputPrediction > currentWorstPrediction
+  }
 }

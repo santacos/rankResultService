@@ -5,9 +5,10 @@ import org.apache.spark.ml.Model
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared._
 import org.apache.spark.ml.util.Identifiable
-import org.apache.spark.sql.functions._
+
 import org.apache.spark.sql.types.{DoubleType, FloatType}
 import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.functions._
 
 /**
   * Created by ibosz on 14/3/59.
