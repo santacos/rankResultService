@@ -1,11 +1,13 @@
 package org.apache.spark.ml.evaluation
 
+import org.apache.spark.ml.evaluation.util.RecommendingAggregationFunction
 import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.sql.DataFrame
 import org.scalactic.TolerantNumerics
 import org.scalamock.proxy.ProxyMockFactory
 import org.scalatest.Matchers
 import testutil.FunSuiteSpark
+import org.apache.spark.sql.functions._
 
 /**
   * Created by ibosz on 14/3/59.
@@ -150,7 +152,12 @@ class NDCGEvaluatorTest extends FunSuiteSpark with Matchers with ProxyMockFactor
     val shouldBeRecommendedTable = testSet
       .filter(testSet("rating") > 1.0).rdd
 
+    val recommendingAggregationFunction =
+      new RecommendingAggregationFunction("item", "prediction", numRecommendation = 2)
 
+    val recommended = predictedTable
+      .groupBy("user")
+      .agg(recommendingAggregationFunction(col("item"), col("prediction")))
 
     implicit val doubleEquality = TolerantNumerics.tolerantDoubleEquality(0.001)
 
