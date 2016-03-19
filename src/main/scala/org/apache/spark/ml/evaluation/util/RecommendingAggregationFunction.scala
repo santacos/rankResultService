@@ -24,8 +24,7 @@ class RecommendingAggregationFunction(
       new StructType()
         .add("item", IntegerType)
         .add("prediction", DoubleType)
-    )),
-    StructField("counter", IntegerType)
+    ))
   ))
 
   override def deterministic: Boolean = true
@@ -33,15 +32,47 @@ class RecommendingAggregationFunction(
   override def dataType: DataType = ArrayType(IntegerType)
 
   override def initialize(buffer: MutableAggregationBuffer): Unit = {
-    buffer(0) = Array[Double]() // recommendations
-    buffer(1) = 0D // counter
+    buffer(0) = Array[Row]() // recommendations
   }
 
   override def update(buffer: MutableAggregationBuffer, input: Row): Unit = {
-    val recommendationCounter = buffer(1).asInstanceOf[Double]
-    val minRecommendation = buffer(0).asInstanceOf[Array[Double]]
+    val currentRecommendations = buffer(0).asInstanceOf[Array[Row]]
+    val currentRecommendationCount = currentRecommendations.length
 
-    val notExceedNumRecommendation = recommendationCounter <= numRecommendation
+    def worseRecommendationReducer(worstSoFar: (Row, Int), pointing: (Row, Int)) =
+      (worstSoFar, pointing) match {
+        case ((Row(_, worstSoFarPrediction: Double), _), (Row(_, pointingPrediction: Double), _)) =>
+          if (pointingPrediction < worstSoFarPrediction)
+            pointing
+          else
+            worstSoFar
+      }
+
+    val worstRecommendation: (Row, Int) = currentRecommendations
+      .zipWithIndex
+      .reduce(worseRecommendationReducer)
+
+    val lessThanNumRecommendation = currentRecommendationCount < numRecommendation
+    val foundBetterRecommendation = {
+      val inputPrediction = input match { case Row(_, prediction: Double) => prediction }
+      val currentWorstPrediction = worstRecommendation match {
+        case (Row(_, prediction: Double), _) => prediction
+      }
+
+      inputPrediction > currentWorstPrediction
+    }
+
+    if(lessThanNumRecommendation) {
+      buffer(0) = currentRecommendations :+ input
+    } else if(foundBetterRecommendation) {
+      val worstRecommendationIndex = worstRecommendation match {
+        case (_, index) => index
+      }
+      buffer(0) = {
+        currentRecommendations(worstRecommendationIndex) = input
+        currentRecommendations
+      }
+    }
   }
 
   override def merge(buffer1: MutableAggregationBuffer, buffer2: Row): Unit = ???
