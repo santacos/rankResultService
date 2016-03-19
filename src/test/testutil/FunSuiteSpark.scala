@@ -12,7 +12,7 @@ class FunSuiteSpark extends FunSuite
 object FunSuiteSpark {
   private lazy val sparkConfig = new SparkConf()
     .setAppName("test")
-    .setMaster("local")
+    .setMaster("local[*]")
 
   lazy val sparkContext = new SparkContext(sparkConfig)
   lazy val sqlContext = new SQLContext(sparkContext)

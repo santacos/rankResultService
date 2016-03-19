@@ -5,8 +5,9 @@ import org.apache.spark.ml.Model
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared._
 import org.apache.spark.ml.util.Identifiable
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DoubleType, FloatType}
+import org.apache.spark.sql.{DataFrame, Row}
 
 /**
   * Created by ibosz on 14/3/59.
@@ -48,7 +49,7 @@ class NDCGEvaluator(override val uid: String)
   def setLabelCol(value: String): this.type  = set(labelCol, value)
 
   setDefault(k -> 10)
-  setDefault(recommendingThreshold -> 1.0D)
+  setDefault(recommendingThreshold -> 0D)
 
   setDefault(userCol -> "user")
   setDefault(itemCol -> "item")
@@ -59,23 +60,38 @@ class NDCGEvaluator(override val uid: String)
     0.0D
   }
 
-  override def evaluateWithModel(dataset: DataFrame, model: Model[_]): Double = {
+  override def evaluateWithModel(dataset: DataFrame, model: Model[_], allUserItems: DataFrame): Double = {
     val schema = dataset.schema
-
-    val predictionColName = $(predictionCol)
-    val predictionType = schema($(predictionCol)).dataType
-    require(predictionType == FloatType || predictionType == DoubleType,
-      s"Prediction column $predictionColName must be of type float or double, " +
-        s" but not $predictionType")
 
     val labelColName = $(labelCol)
     val labelType = schema($(labelCol)).dataType
     require(labelType == FloatType || labelType == DoubleType,
       s"Label column $labelColName must be of type float or double, but not $labelType")
 
+    val users = allUserItems.select("user").rdd.map { case Row(user) => user }.distinct
 
+    val predictedTable = model.transform(allUserItems)
+    val shouldBeRecommendedTable = dataset
+      .filter(col($(labelCol)) > $(recommendingThreshold))
 
-    1.0D
+    val predictionAndLabels = users.collect.map(user => {
+
+      val predictions = predictedTable
+        .filter(predictedTable($(userCol)) === user)
+        .sort(desc($(predictionCol)))
+        .limit($(k)) // k
+        .select($(userCol), $(itemCol))
+
+      val labels = shouldBeRecommendedTable
+        .filter(col("user") === user)
+        .select($(userCol), $(itemCol))
+
+      (predictions, labels)
+    })
+
+//    new RankingMetrics(predictionAndLabels).ndcgAt($(k))
+    0.0D
+
   }
 
   override def copy(extra: ParamMap): Evaluator = defaultCopy(extra)
