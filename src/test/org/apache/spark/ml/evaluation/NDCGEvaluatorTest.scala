@@ -163,14 +163,8 @@ class NDCGEvaluatorTest extends FunSuiteSpark with Matchers with ProxyMockFactor
 
     val evaluator = new NDCGEvaluator()
       .setK(3)
-      .setRecommendingThreshold(1D)
-      .setRecommendingThreshold(1.0)
+      .setRecommendingThreshold(10D)
 
-//    evaluator.evaluateWithModel(testSet, model, allUserItems)
-
-
-
-//    new RankingMetrics(predictionAndLabels).ndcgAt(2) should equal (0.8154648767857287)
-
+    evaluator.evaluateWithModel(testSet, model, allUserItems) should equal (0.8154648767857287)
   }
 }

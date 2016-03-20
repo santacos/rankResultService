@@ -2,13 +2,14 @@ package org.apache.spark.ml.evaluation
 
 import org.apache.spark.Logging
 import org.apache.spark.ml.Model
+import org.apache.spark.ml.evaluation.util.{GroundTruthSetFilteringAggregationFunction, RecommendingAggregationFunction}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared._
 import org.apache.spark.ml.util.Identifiable
-
+import org.apache.spark.mllib.evaluation.RankingMetrics
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DoubleType, FloatType}
 import org.apache.spark.sql.{DataFrame, Row}
-import org.apache.spark.sql.functions._
 
 /**
   * Created by ibosz on 14/3/59.
@@ -69,30 +70,41 @@ class NDCGEvaluator(override val uid: String)
     require(labelType == FloatType || labelType == DoubleType,
       s"Label column $labelColName must be of type float or double, but not $labelType")
 
-    val users = allUserItems.select("user").rdd.map { case Row(user) => user }.distinct
-
     val predictedTable = model.transform(allUserItems)
-    val shouldBeRecommendedTable = dataset
-      .filter(col($(labelCol)) > $(recommendingThreshold))
 
-    val predictionAndLabels = users.collect.map(user => {
+    // ** aggregation functions **
 
-      val predictions = predictedTable
-        .filter(predictedTable($(userCol)) === user)
-        .sort(desc($(predictionCol)))
-        .limit($(k)) // k
-        .select($(userCol), $(itemCol))
+    val recommendingAggregationFunction =
+      new RecommendingAggregationFunction($(itemCol), $(predictionCol), numRecommendation = $(k))
 
-      val labels = shouldBeRecommendedTable
-        .filter(col("user") === user)
-        .select($(userCol), $(itemCol))
+    val groundTruthFilter =
+      new GroundTruthSetFilteringAggregationFunction(
+        $(itemCol), $(labelCol), $(recommendingThreshold))
 
-      (predictions, labels)
-    })
+    // ** aggregation functions ** END
 
-//    new RankingMetrics(predictionAndLabels).ndcgAt($(k))
-    0.0D
+    val recommendedTable = predictedTable
+      .groupBy($(userCol))
+      .agg(
+        recommendingAggregationFunction(col($(itemCol)), col($(predictionCol)))
+          .alias("recommended"))
 
+    val groundTruthTable = dataset
+      .groupBy($(userCol))
+      .agg(
+        groundTruthFilter(col($(itemCol)), col($(labelCol)))
+          .alias("ground_truth"))
+
+
+    val predictionAndLabels = recommendedTable.join(groundTruthTable, $(userCol))
+      .select("recommended", "ground_truth")
+      .map {
+        case Row(
+          recommended: Seq[Int],
+          groundTruth: Seq[Int]
+        ) => (recommended.toArray, groundTruth.toArray)}
+
+    new RankingMetrics(predictionAndLabels).ndcgAt($(k))
   }
 
   override def copy(extra: ParamMap): Evaluator = defaultCopy(extra)

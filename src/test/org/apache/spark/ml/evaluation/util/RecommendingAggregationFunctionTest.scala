@@ -1,8 +1,8 @@
 package org.apache.spark.ml.evaluation.util
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.expressions.MutableAggregationBuffer
 import org.scalatest.{FunSuite, Matchers}
+import testutil.AggregationBuffer
 
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
@@ -10,26 +10,8 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by ibosz on 19/3/59.
   */
-class RecommendingAggregationFunctionTest extends FunSuite with Matchers {
-  class TestBuffer(
-      val array:ArrayBuffer[Any]
-    ) extends MutableAggregationBuffer {
-
-    def +=(element: Any): this.type = {
-      array += element
-      this
-    }
-
-    override def update(i: Int, value: Any): Unit = {
-      array(i) = value
-    }
-
-    override def get(i: Int): Any = array(i)
-
-    override def length: Int = array.length
-
-    override def copy(): Row = Row()
-  }
+class RecommendingAggregationFunctionTest
+  extends FunSuite with Matchers with AggregationBuffer {
 
   test("initialization") {
     val recommendingAggregationFunction =

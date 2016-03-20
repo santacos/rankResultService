@@ -1,9 +1,9 @@
 package org.apache.spark.ml
 
-import org.apache.spark.ml.evaluation.util.RecommendingAggregationFunction
+import org.apache.spark.ml.evaluation.util.{GroundTruthSetFilteringAggregationFunction, RecommendingAggregationFunction}
 import org.apache.spark.ml.recommendation.ALSModel
+import org.apache.spark.sql.{Row, DataFrame, SQLContext}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{DataFrame, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**
@@ -59,14 +59,28 @@ object Entry extends App {
   val users = allUserItems.select("user").distinct
 
   val predictedTable = model.transform(allUserItems)
-  val shouldBeRecommendedTable = testSet
-    .filter(testSet("rating") > 1.0).rdd
+
+  val groundTruthFilter =
+    new GroundTruthSetFilteringAggregationFunction("item", "rating", 10D)
+
+  val groundTruthTable = testSet
+      .groupBy("user")
+      .agg(
+        groundTruthFilter(col("item"), col("rating"))
+          .alias("ground_truth"))
 
   val recommendingAggregationFunction =
     new RecommendingAggregationFunction("item", "prediction", numRecommendation = 2)
 
-  val recommended = predictedTable
+  val recommendedTable = predictedTable
     .groupBy("user")
-    .agg(recommendingAggregationFunction(col("item"), col("prediction")))
-    .show()
+    .agg(
+      recommendingAggregationFunction(col("item"), col("prediction"))
+      .alias("recommended"))
+
+  recommendedTable.join(groundTruthTable, "user")
+    .select("recommended", "ground_truth")
+    .map{ case Row(recommended, groundTruth) => (recommended, groundTruth)}
+    .collect
+    .foreach(println)
 }
