@@ -8,7 +8,7 @@ version := "1.0"
 scalaVersion := "2.10.5"
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
-mainClass in Compile := Some("ResultRankingService")
+//mainClass in Compile := Some("Entry")
 
 libraryDependencies ++= {
   val akkaV       = "2.3.14"
@@ -23,7 +23,8 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-testkit-experimental"       % akkaStreamV,
     "org.apache.spark"  %% "spark-core"                           % "1.6.0" % "provided",
     "org.apache.spark"  %% "spark-mllib"                          % "1.6.0",
-    "org.scalatest"     %% "scalatest"                            % scalaTestV % "test"
+    "org.scalatest"     %% "scalatest"                            % scalaTestV % "test",
+    "org.scalamock"     %% "scalamock-scalatest-support"          % "3.2.2" % "test"
   )
 }
 
@@ -32,6 +33,3 @@ assemblyMergeStrategy in assembly := {
   case "reference.conf"              => MergeStrategy.concat
   case _                             => MergeStrategy.first
 }
-
-
-    
