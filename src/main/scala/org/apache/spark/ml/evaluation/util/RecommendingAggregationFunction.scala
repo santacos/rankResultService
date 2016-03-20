@@ -1,7 +1,6 @@
 package org.apache.spark.ml.evaluation.util
 
 import org.apache.spark.sql.Row
-import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema
 import org.apache.spark.sql.expressions.{MutableAggregationBuffer, UserDefinedAggregateFunction}
 import org.apache.spark.sql.types._
 
@@ -68,10 +67,12 @@ class RecommendingAggregationFunction(
 
     val combinedRecomendation = recommendationsPart1 ++ recommendationsPart2
 
+    def recomendationPredictionDesc(recommendation: Row) = recommendation match {
+      case Row(_, prediction: Double) => -prediction
+    }
+
     buffer1(0) = combinedRecomendation
-      .sortBy( recommendation => recommendation match {
-        case Row(_, prediction: Double) => -prediction
-      })
+      .sortBy(recomendationPredictionDesc)
       .take(numRecommendation)
   }
 

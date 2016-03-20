@@ -3,7 +3,6 @@ package org.apache.spark.ml.tuning
 import com.github.fommil.netlib.F2jBLAS
 import org.apache.spark.ml.Model
 import org.apache.spark.ml.evaluation.{Evaluator, RankingMetricEvaluator}
-import org.apache.spark.ml.param.{Param, Params}
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.sql.DataFrame
 
@@ -11,24 +10,22 @@ import org.apache.spark.sql.DataFrame
   * Created by ibosz on 15/3/59.
   */
 
-trait RankingMetricsCrossValidatorParams extends Params {
-  val rankingEvaluator: Param[RankingMetricEvaluator] = new Param(this, "rankingMetricEvaluator",
-    "rankingMetricEvaluator used to select hyper-parameters that maximize the validated ranking metric")
 
-  def getRankingEvaluator: Evaluator = $(rankingEvaluator)
-}
-
-class RankingMetricsCrossValidator extends CrossValidator with RankingMetricsCrossValidatorParams {
+class RankingMetricsCrossValidator extends CrossValidator {
   private val f2jBLAS = new F2jBLAS
 
-  def setRankingEvaluator(value: RankingMetricEvaluator): this.type = set(rankingEvaluator, value)
+  override def setEvaluator(value: Evaluator): this.type = {
+    throw new Exception("set evaluator should not be used")
+  }
+
+  def setRankingEvaluator(value: RankingMetricEvaluator): this.type = set(evaluator, value)
 
   override def fit(dataset: DataFrame): CrossValidatorModel = {
     val schema = dataset.schema
     transformSchema(schema, logging = true)
     val sqlCtx = dataset.sqlContext
     val est = $(estimator)
-    val eval = $(rankingEvaluator)
+    val eval = $(evaluator).asInstanceOf[RankingMetricEvaluator]
     val epm = $(estimatorParamMaps)
     val numModels = epm.length
     val metrics = new Array[Double](epm.length)

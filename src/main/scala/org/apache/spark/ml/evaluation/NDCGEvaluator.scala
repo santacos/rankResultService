@@ -1,15 +1,16 @@
 package org.apache.spark.ml.evaluation
 
-import org.apache.spark.Logging
 import org.apache.spark.ml.Model
 import org.apache.spark.ml.evaluation.util.{GroundTruthSetFilteringAggregationFunction, RecommendingAggregationFunction}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared._
-import org.apache.spark.ml.util.Identifiable
+import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 import org.apache.spark.mllib.evaluation.RankingMetrics
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DoubleType, FloatType}
 import org.apache.spark.sql.{DataFrame, Row}
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
 
 /**
   * Created by ibosz on 14/3/59.
@@ -17,15 +18,27 @@ import org.apache.spark.sql.{DataFrame, Row}
 
 private[evaluation] trait NDCGParams extends Params
   with HasInputCols with HasLabelCol with HasPredictionCol
-  with Logging
 {
-  val k: Param[Int] =
-    new Param(this, "k", "number of item that should be recommended to be used to evaluate")
+  val k =
+    new Param[Int](this, "k", "number of item that should be recommended to be used to evaluate") {
+      override def jsonEncode(value: Int): String =
+        compact(render(JInt(value)))
+
+      override def jsonDecode(json: String): Int =
+        parse(json) match { case JInt(x) => x.asInstanceOf[BigInt].toInt }
+    }
   def getK: Int = $(k)
 
   val recommendingThreshold =
     new Param[Double](this, "recommendingThreshold",
-      "threshold for determining if an item should be recommended for user or not")
+      "threshold for determining if an item should be recommended for user or not") {
+      override def jsonEncode(value: Double): String =
+        compact(render(JDouble(value)))
+
+      override def jsonDecode(json: String): Double =
+        parse(json) match { case JDouble(x) => x.asInstanceOf[Double] }
+    }
+
   def getRecommendingThreshold: Double = $(recommendingThreshold)
 
   val userCol = new Param[String](this, "userCol", "column name for user ids")
@@ -40,6 +53,7 @@ private[evaluation] trait NDCGParams extends Params
 class NDCGEvaluator(override val uid: String)
   extends RankingMetricEvaluator
   with NDCGParams
+  with DefaultParamsWritable
 {
   def this() = this(Identifiable.randomUID("ndcgEval"))
 
@@ -49,6 +63,7 @@ class NDCGEvaluator(override val uid: String)
   def setUserCol(value: String): this.type  = set(userCol, value)
   def setItemCol(value: String): this.type  = set(itemCol, value)
   def setLabelCol(value: String): this.type  = set(labelCol, value)
+  def setPredictionCol(value: String): this.type  = set(predictionCol, value)
 
   setDefault(k -> 10)
   setDefault(recommendingThreshold -> 0D)
@@ -109,4 +124,8 @@ class NDCGEvaluator(override val uid: String)
 
   override def copy(extra: ParamMap): Evaluator = defaultCopy(extra)
 
+}
+
+object NDCGEvaluator extends DefaultParamsReadable[NDCGEvaluator] {
+  override def load(path: String): NDCGEvaluator = super.load(path)
 }
