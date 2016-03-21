@@ -65,14 +65,14 @@ class RecommendingAggregationFunction(
     val recommendationsPart1 = buffer1(0).asInstanceOf[mutable.WrappedArray[Row]]
     val recommendationsPart2 = buffer2(0).asInstanceOf[mutable.WrappedArray[Row]]
 
-    val combinedRecomendation = recommendationsPart1 ++ recommendationsPart2
+    val combinedRecommendation = recommendationsPart1 ++ recommendationsPart2
 
-    def recomendationPredictionDesc(recommendation: Row) = recommendation match {
+    def recommendationPredictionDesc(recommendation: Row) = recommendation match {
       case Row(_, prediction: Double) => -prediction
     }
 
-    buffer1(0) = combinedRecomendation
-      .sortBy(recomendationPredictionDesc)
+    buffer1(0) = combinedRecommendation
+      .sortBy(recommendationPredictionDesc)
       .take(numRecommendation)
   }
 
