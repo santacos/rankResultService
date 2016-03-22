@@ -1,4 +1,4 @@
-package service.searchranking.recmodel
+package wongnai.mlservice.api.searchranking.recmodel
 
 import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
 import org.apache.spark.rdd.RDD

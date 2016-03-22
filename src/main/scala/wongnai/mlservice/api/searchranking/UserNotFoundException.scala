@@ -1,4 +1,4 @@
-package service.searchranking
+package wongnai.mlservice.api.searchranking
 
 /**
   * Created by ibosz on 7/3/59.

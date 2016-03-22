@@ -1,8 +1,8 @@
-package service.searchranking
+package wongnai.mlservice.api.searchranking
 
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{FunSuite, Matchers}
-import service.searchranking.recmodel.RecommendationModel
+import wongnai.mlservice.api.searchranking.recmodel.{RecommendationModel, SearchResultRanker}
 
 import scala.util.Try
 

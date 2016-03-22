@@ -1,4 +1,4 @@
-package service.searchranking.recmodel
+package wongnai.mlservice.api.searchranking.recmodel
 
 /**
   * Created by ibosz on 7/3/59.

@@ -1,4 +1,4 @@
-package api
+package wongnai.mlservice.api
 
 import org.scalatest.{FunSuite, Matchers}
 

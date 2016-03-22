@@ -1,4 +1,4 @@
-package service.searchranking.recmodel
+package wongnai.mlservice.api.searchranking.recmodel
 
 import org.apache.spark.rdd.RDD
 import org.scalatest.Matchers

@@ -1,6 +1,6 @@
-package service.searchranking
+package wongnai.mlservice.api.searchranking.recmodel
 
-import service.searchranking.recmodel.RecommendationModel
+import wongnai.mlservice.api.searchranking.UserNotFoundException
 
 import scala.util.Try
 
