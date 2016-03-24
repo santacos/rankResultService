@@ -1,4 +1,4 @@
-package org.apache.spark.ml.evaluation.util
+package org.apache.spark.ml.evaluation.aggregation
 
 import org.apache.spark.sql.Row
 import org.scalatest.{FunSuite, Matchers}

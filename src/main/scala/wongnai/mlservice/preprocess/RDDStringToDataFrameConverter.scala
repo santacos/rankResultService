@@ -9,7 +9,7 @@ import scala.util.matching.Regex
 /**
   * Created by ibosz on 22/3/59.
   */
-class RDDStringToDataFrameConstructor[ColumnTypeInTuple <: Product :TypeTag:ClassTag](
+class RDDStringToDataFrameConverter[ColumnTypeInTuple <: Product :TypeTag:ClassTag](
     val pattern: Regex,
     val outputCols: Seq[String],
     val capturedListToTuple: List[String] => ColumnTypeInTuple

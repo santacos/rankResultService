@@ -9,7 +9,7 @@ import scala.util.matching.Regex
 /**
   * Created by ibosz on 22/3/59.
   */
-class RDDStringToDataFrameConstructorTest extends FunSuiteSpark with Matchers {
+class RDDStringToDataFrameConverterTest extends FunSuiteSpark with Matchers {
   import testutil.FunSuiteSpark._
 
   test("DataFrame columns' name should be as it is predefined") {
@@ -22,7 +22,7 @@ class RDDStringToDataFrameConstructorTest extends FunSuiteSpark with Matchers {
     val columns = Seq("user", "item", "score")
 
     val dataFrameConstructor =
-      new RDDStringToDataFrameConstructor
+      new RDDStringToDataFrameConverter
         [(String, String, String)](pattern, columns, toTuple)
 
     val rdd = sparkContext.parallelize(List("aaa", "bbb", "ccc"))
@@ -41,7 +41,7 @@ class RDDStringToDataFrameConstructorTest extends FunSuiteSpark with Matchers {
     val columns = Seq("user", "item", "score")
 
     val dataFrameConstructor =
-      new RDDStringToDataFrameConstructor
+      new RDDStringToDataFrameConverter
         [(Int, Int, Double)](pattern, columns, toTuple)
 
     val rdd = sparkContext.parallelize(List(
@@ -68,7 +68,7 @@ class RDDStringToDataFrameConstructorTest extends FunSuiteSpark with Matchers {
     val columns = Seq("user", "item", "score")
 
     val dataFrameConstructor =
-      new RDDStringToDataFrameConstructor
+      new RDDStringToDataFrameConverter
         [(Int, Int, Double)](pattern, columns, toTuple)
 
     val rdd = sparkContext.parallelize(List(

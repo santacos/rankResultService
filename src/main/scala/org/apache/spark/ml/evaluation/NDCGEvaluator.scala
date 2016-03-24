@@ -1,7 +1,7 @@
 package org.apache.spark.ml.evaluation
 
 import org.apache.spark.ml.Model
-import org.apache.spark.ml.evaluation.util.{GroundTruthSetFilteringAggregationFunction, RecommendingAggregationFunction}
+import org.apache.spark.ml.evaluation.aggregation.{GroundTruthSetFilteringAggregationFunction, RecommendingAggregationFunction}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared._
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
