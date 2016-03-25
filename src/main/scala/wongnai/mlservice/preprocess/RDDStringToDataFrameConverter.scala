@@ -21,6 +21,10 @@ class RDDStringToDataFrameConverter[ColumnTypeInTuple <: Product :TypeTag:ClassT
     val toTuple = capturedListToTuple
 
     rdd
+      .filter(reg.findFirstIn(_) match {
+        case Some(_) => true
+        case None => false
+      })
       .map(reg.unapplySeq(_) match {
         case Some(list) => toTuple(list) })
       .toDF(outputCols: _*)

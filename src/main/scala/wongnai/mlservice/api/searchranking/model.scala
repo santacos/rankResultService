@@ -23,6 +23,8 @@ object model {
     crossValidationParams: CrossValidationParams
   ): Model[_] = {
     val als = new ALS()
+      .setImplicitPrefs(true)
+
     val paramGrid = new ParamGridBuilder()
       .addGrid(als.maxIter, alsParamGrid.maxIter)
       .addGrid(als.rank, alsParamGrid.rank)

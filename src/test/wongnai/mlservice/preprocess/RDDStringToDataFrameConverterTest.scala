@@ -77,10 +77,36 @@ class RDDStringToDataFrameConverterTest extends FunSuiteSpark with Matchers {
 
     val dataFrame = dataFrameConstructor.createDataFrame(rdd)
 
-    dataFrame.collect() should (
-      contain (Row(1, 2, 2.4)) and
-      contain (Row(2, 4, 5.6)) and
-      contain (Row(5, 6, 1.2))
+    dataFrame.collect() shouldBe Array(
+      Row(1, 2, 2.4),
+      Row(2, 4, 5.6),
+      Row(5, 6, 1.2)
+    )
+  }
+
+  test("filter out unmatched string") {
+    implicit val dataFrameConstructionContext = sqlContext
+
+    val toTuple = (listOfMatched: List[String]) => listOfMatched match {
+      case List(user, item, score) => (user.toInt, item.toInt, score.toDouble)
+    }
+    val pattern = new Regex("(\\d+)::(\\d+)::(\\d*.\\d+)")
+    val columns = Seq("user", "item", "score")
+
+    val dataFrameConstructor =
+      new RDDStringToDataFrameConverter
+        [(Int, Int, Double)](pattern, columns, toTuple)
+
+    val rdd = sparkContext.parallelize(List(
+      "1::2::2.4", "unmatched stuffs", "2::4::5.6", "5::6::1.2", ""
+    ))
+
+    val dataFrame = dataFrameConstructor.createDataFrame(rdd)
+
+    dataFrame.collect() shouldBe Array(
+      Row(1, 2, 2.4),
+      Row(2, 4, 5.6),
+      Row(5, 6, 1.2)
     )
   }
 

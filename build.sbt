@@ -21,6 +21,7 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-http-experimental"               % akkaStreamV,
     "com.typesafe.akka" %% "akka-http-spray-json-experimental"    % akkaStreamV,
     "com.typesafe.akka" %% "akka-http-testkit-experimental"       % akkaStreamV,
+    "com.databricks"    %% "spark-csv"                            % "1.4.0",
     "org.apache.spark"  %% "spark-core"                           % "1.6.0" % "provided",
     "org.apache.spark"  %% "spark-mllib"                          % "1.6.0",
     "org.scalatest"     %% "scalatest"                            % scalaTestV % "test",
