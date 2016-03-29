@@ -41,20 +41,25 @@ class RecommendingAggregationFunction(
     val currentRecommendations = buffer.getAs[mutable.WrappedArray[Row]](0)
     val currentRecommendationCount = currentRecommendations.length
 
+    val finalInput = input match {
+      case Row(item, prediction: Double) =>
+        if(prediction.isNaN) Row(item, 0D) else input
+    }
+
     val isCurrentCountLessThanNumRecommendation = currentRecommendationCount < numRecommendation
 
     if(currentRecommendations.isEmpty || isCurrentCountLessThanNumRecommendation) {
-      buffer(0) = currentRecommendations :+ input
+      buffer(0) = currentRecommendations :+ finalInput
     } else {
       val worstRecommendationWithIndex = findWorstRecommendationWithIndex(currentRecommendations)
-      val foundBetterRecommendation = isBetterRecommendation(worstRecommendationWithIndex, input)
+      val foundBetterRecommendation = isBetterRecommendation(worstRecommendationWithIndex, finalInput)
 
      if(foundBetterRecommendation) {
         val worstRecommendationIndex = worstRecommendationWithIndex match {
           case (_, index) => index
         }
         buffer(0) = {
-          currentRecommendations(worstRecommendationIndex) = input
+          currentRecommendations(worstRecommendationIndex) = finalInput
           currentRecommendations
         }
       }

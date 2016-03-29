@@ -1,47 +1,82 @@
 package wongnai.mlservice.rest
 import akka.http.scaladsl.server.Directives._
-import wongnai.mlservice.Spark.sqlContext
+import wongnai.mlservice.api.searchranking.{NDCGParams, CrossValidationParams, ALSParamGrid}
 import wongnai.mlservice.rest.controller.PersonalizationController
-import wongnai.mlservice.rest.controller.PersonalizationController.recommendationModel
 
 /**
   * Created by ibosz on 24/3/59.
   */
 trait Route extends JsonSupport {
   val route =
-    path("personalize" / "rank"){
+    path("personalize" / "rank") {
       post {
         entity(as[SearchResult]) { searchResult =>
+          complete(PersonalizationController.rank(searchResult.user, searchResult.items))
+        }
+      }
+    } ~
+    path("personalize" / "train") {
+      post {
+        entity(as[FileLocation]) { fileLocation =>
           complete {
-            PersonalizedSearchResult(searchResult.user, searchResult.items)
+            PersonalizationController.train(fileLocation.path)
+
+            "request success"
           }
         }
       }
     } ~
-    path("personalize" / "train"){
+    path("personalize" / "model" / "save") {
       post {
-        entity(as[SearchResult]) { searchResult =>
-          complete {
-            val path = "/Users/macbookair/Downloads/wongnai/log1.csv"
-
-            PersonalizationController.train(path)
-            "training request successful"
-          }
+        entity(as[FileLocation]) { fileLocation =>
+          PersonalizationController.save(fileLocation.path)
+          complete("save successful")
         }
-      } ~
+      }
+    } ~
+    path("personalize" / "model" / "load") {
+      post {
+        entity(as[FileLocation]) { fileLocation =>
+          PersonalizationController.load(fileLocation.path)
+          complete("load successful")
+        }
+      }
+    } ~
+    path("personalize" / "model" / "status") {
       get {
-        complete {
-          val test = sqlContext.createDataFrame(Seq(
-            (1807038, 208596, 1),
-            (1456594, 174842, 3),
-            (1802099, 192971, 1),
-            (2119042, 193099, 1),
-            (1617985, 191637, 1)
-          )).toDF("user", "item", "rating")
-
-          recommendationModel.transform(test).show()
-
-          "look at log"
+        complete("status")
+      }
+    } ~
+    path("personalize" / "model" / "setting") {
+      get {
+        complete(Params(
+          PersonalizationController.alsParamGrid,
+          PersonalizationController.crossValidationParams,
+          PersonalizationController.ndcgParams
+        ))
+      }
+    } ~
+    path("personalize" / "model" / "setting" / "als") {
+      post {
+        entity(as[ALSParamGrid]) { alsParamGrid =>
+          PersonalizationController.alsParamGrid = alsParamGrid
+          complete(PersonalizationController.alsParamGrid)
+        }
+      }
+    } ~
+    path("personalize" / "model" / "setting" / "crossvalidator") {
+      post {
+        entity(as[CrossValidationParams]) { crossValidationParams =>
+          PersonalizationController.crossValidationParams = crossValidationParams
+          complete(PersonalizationController.crossValidationParams)
+        }
+      }
+    } ~
+    path("personalize" / "model" / "setting" / "ndcg") {
+      post {
+        entity(as[NDCGParams]) { ndcgParams =>
+          PersonalizationController.ndcgParams = ndcgParams
+          complete(PersonalizationController.ndcgParams)
         }
       }
     }

@@ -8,25 +8,21 @@ import com.typesafe.config.ConfigFactory
 /**
   * Created by ibosz on 24/3/59.
   */
-object ServerBootstrap extends App with Route{
+object ServerBootstrap extends Route{
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
   implicit val ec = system.dispatcher
 
   val config = ConfigFactory.load()
 
-  val bindingFuture =
-    Http().bindAndHandle(
-      route,
-      config.getString("http.interface"),
-      config.getInt("http.port"))
+  def startServer(): Unit = {
+    val bindingFuture =
+      Http().bindAndHandle(
+        route,
+        config.getString("http.interface"),
+        config.getInt("http.port"))
 
-  println(s"server online at http://${config.getString("http.interface")}:${config.getInt("http.port")}")
-
-//  while(true) {}
-//
-//  bindingFuture
-//    .flatMap(_.unbind())
-//    .onComplete(_ => system.shutdown())
+    println(s"server online at http://${config.getString("http.interface")}:${config.getInt("http.port")}")
+  }
 
 }

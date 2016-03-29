@@ -25,6 +25,23 @@ class RecommendingAggregationFunctionTest
     recommendations shouldBe Array[Row]()
   }
 
+  test("update when input isNaN") {
+    val recommendingAggregationFunction =
+      new RecommendingAggregationFunction("item", "prediction", numRecommendation = 2)
+
+    val buffer = new TestBuffer(ArrayBuffer(
+      mutable.WrappedArray.empty
+    ))
+
+    val recommendationCandidate = Row(3, Double.NaN) // Row(item, prediction)
+
+    recommendingAggregationFunction.update(buffer, recommendationCandidate)
+
+    val recommendations = buffer(0).asInstanceOf[mutable.WrappedArray[Row]]
+
+    recommendations should ( contain (Row(3, 0D)) )
+  }
+
   test("update when recommendation is empty") {
     val recommendingAggregationFunction =
       new RecommendingAggregationFunction("item", "prediction", numRecommendation = 2)

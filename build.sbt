@@ -8,7 +8,7 @@ version := "1.0"
 scalaVersion := "2.10.5"
 scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8")
 
-//mainClass in Compile := Some("Entry")
+mainClass in Compile := Some("wongnai.mlservice.Spark")
 
 libraryDependencies ++= {
   val akkaV       = "2.3.14"

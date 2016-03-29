@@ -1,9 +1,8 @@
 package wongnai.mlservice.api.searchranking
 
-import org.apache.spark.ml.Model
 import org.apache.spark.ml.evaluation.NDCGEvaluator
 import org.apache.spark.ml.recommendation.ALS
-import org.apache.spark.ml.tuning.{ParamGridBuilder, RankingMetricsCrossValidator}
+import org.apache.spark.ml.tuning.{CrossValidatorModel, ParamGridBuilder, RankingMetricsCrossValidator}
 import org.apache.spark.sql.DataFrame
 
 /**
@@ -21,7 +20,7 @@ object model {
     alsParamGrid: ALSParamGrid,
     ndcgParams: NDCGParams,
     crossValidationParams: CrossValidationParams
-  ): Model[_] = {
+  ): CrossValidatorModel = {
     val als = new ALS()
       .setImplicitPrefs(true)
 
