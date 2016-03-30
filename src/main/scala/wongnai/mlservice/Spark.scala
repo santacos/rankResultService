@@ -1,6 +1,9 @@
 package wongnai.mlservice
 
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.ml.evaluation.NDCGEvaluator
+import org.apache.spark.ml.recommendation.{ALSModel, ALS}
+import org.apache.spark.ml.tuning.RankingMetricsCrossValidator
+import org.apache.spark.sql.{Row, SQLContext}
 import org.apache.spark.{SparkConf, SparkContext}
 import wongnai.mlservice.rest.ServerBootstrap
 
@@ -10,9 +13,18 @@ import wongnai.mlservice.rest.ServerBootstrap
 object Spark extends App {
   val sparkConf: SparkConf = new SparkConf()
     .setAppName("SearchResultRanker")
+    .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 
-  var sparkContext: SparkContext = new SparkContext(sparkConf)
-  var sqlContext: SQLContext = new SQLContext(sparkContext)
+  sparkConf.registerKryoClasses(Array(
+    classOf[NDCGEvaluator],
+    classOf[RankingMetricsCrossValidator],
+    classOf[Row],
+    classOf[ALS],
+    classOf[ALSModel]
+  ))
+
+  val sparkContext: SparkContext = new SparkContext(sparkConf)
+  val sqlContext: SQLContext = new SQLContext(sparkContext)
 
   ServerBootstrap.startServer()
 }

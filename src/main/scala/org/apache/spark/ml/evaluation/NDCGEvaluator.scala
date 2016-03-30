@@ -1,12 +1,11 @@
 package org.apache.spark.ml.evaluation
 
+import org.apache.spark.Logging
 import org.apache.spark.ml.Model
-import org.apache.spark.ml.evaluation.aggregation.{GroundTruthSetFilteringAggregationFunction, RecommendingAggregationFunction}
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared._
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
-import org.apache.spark.mllib.evaluation.RankingMetrics
-import org.apache.spark.sql.functions._
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.{DoubleType, FloatType}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.json4s._
@@ -54,6 +53,7 @@ class NDCGEvaluator(override val uid: String)
   extends RankingMetricEvaluator
   with NDCGParams
   with DefaultParamsWritable
+  with Logging
 {
   def this() = this(Identifiable.randomUID("ndcgEval"))
 
@@ -87,39 +87,67 @@ class NDCGEvaluator(override val uid: String)
 
     val predictedTable = model.transform(allUserItems)
 
-    // ** aggregation functions **
+    val recommended = predictedTable
+        .select($(userCol), $(itemCol), $(predictionCol))
+        .map{ case Row(user, item: Int, prediction: Double) => user -> (item, prediction) }
+        .aggregateByKey(Array[(Int, Double)]())(
+          (itemAndPredictions, itemAndPrediction) => itemAndPredictions :+ itemAndPrediction,
+          (itemAndPredictions1, itemAndPredictions2) => itemAndPredictions1 ++ itemAndPredictions2 )
+        .map {
+          case (user, itemAndPredictions: Array[(Int, Double)]) => {
+            val recommendedItems = itemAndPredictions
+              .sortBy{ case (_, prediction) => prediction }(Ordering.Double.reverse)
+              .map{ case (item, prediction) => item }
 
-    val recommendingAggregationFunction =
-      new RecommendingAggregationFunction($(itemCol), $(predictionCol), numRecommendation = $(k))
+            (user, recommendedItems)
+          }
+        }
 
-    val groundTruthFilter =
-      new GroundTruthSetFilteringAggregationFunction(
-        $(itemCol), $(labelCol), $(recommendingThreshold))
+    val groundTruth = dataset
+        .select($(userCol), $(itemCol), $(labelCol))
+        .map{ case Row(user, item: Int, label: Double) => user -> (item, label) }
+      .aggregateByKey(Array[Int]())(
+        (itemAndLabels, itemAndLabel) =>
+          if(itemAndLabel._2 >= $(recommendingThreshold))
+            itemAndLabels :+ (itemAndLabel match { case (item, _) => item })
+          else
+            itemAndLabels,
+        (itemAndLabels1, itemAndLabels2) => itemAndLabels1 ++ itemAndLabels2 )
 
-    // ** aggregation functions ** END
+    val predictionAndLabels = recommended.join(groundTruth)
+      .map { case (_, predictionAndLabel) => predictionAndLabel }
 
-    val recommendedTable = predictedTable
-      .groupBy($(userCol))
-      .agg(
-        recommendingAggregationFunction(col($(itemCol)), col($(predictionCol)))
-          .alias("recommended"))
+    ndcgAt($(k), predictionAndLabels)
+  }
 
-    val groundTruthTable = dataset
-      .groupBy($(userCol))
-      .agg(
-        groundTruthFilter(col($(itemCol)), col($(labelCol)))
-          .alias("ground_truth"))
+  private def ndcgAt(
+      k: Int, predictionAndLabels: RDD[(Array[Int], Array[Int])]): Double = {
+    require(k > 0, "ranking position k should be positive")
+    predictionAndLabels.map { case (pred: Array[Int], lab: Array[Int]) =>
+      val labSet = lab.toSet
 
-
-    val predictionAndLabels = recommendedTable.join(groundTruthTable, $(userCol))
-      .select("recommended", "ground_truth")
-      .map {
-        case Row(
-          recommended: Seq[Int],
-          groundTruth: Seq[Int]
-        ) => (recommended.toArray, groundTruth.toArray)}
-
-    new RankingMetrics(predictionAndLabels).ndcgAt($(k))
+      if (labSet.nonEmpty) {
+        val labSetSize = labSet.size
+        val n = math.min(math.max(pred.length, labSetSize), k)
+        var maxDcg = 0.0
+        var dcg = 0.0
+        var i = 0
+        while (i < n) {
+          val gain = 1.0 / math.log(i + 2)
+          if (labSet.contains(pred(i))) {
+            dcg += gain
+          }
+          if (i < labSetSize) {
+            maxDcg += gain
+          }
+          i += 1
+        }
+        dcg / maxDcg
+      } else {
+        logWarning("Empty ground truth set, check input data")
+        0.0
+      }
+    }.mean()
   }
 
   override def copy(extra: ParamMap): Evaluator = defaultCopy(extra)

@@ -1,7 +1,9 @@
 package wongnai.mlservice.rest
 import akka.http.scaladsl.server.Directives._
+import wongnai.mlservice.Spark
 import wongnai.mlservice.api.searchranking.{NDCGParams, CrossValidationParams, ALSParamGrid}
 import wongnai.mlservice.rest.controller.PersonalizationController
+import akka.http.scaladsl.server.directives.FormFieldDirectives.FieldMagnet
 
 /**
   * Created by ibosz on 24/3/59.
@@ -12,6 +14,14 @@ trait Route extends JsonSupport {
       post {
         entity(as[SearchResult]) { searchResult =>
           complete(PersonalizationController.rank(searchResult.user, searchResult.items))
+        }
+      }
+    } ~
+    path("personalize" / "checkpoint") {
+      post {
+        entity(as[FileLocation]) { fileLocation =>
+          Spark.sparkContext.setCheckpointDir(fileLocation.path)
+          complete(s"checkpoint location is set to ${fileLocation.path}")
         }
       }
     } ~
@@ -80,5 +90,4 @@ trait Route extends JsonSupport {
         }
       }
     }
-
 }
