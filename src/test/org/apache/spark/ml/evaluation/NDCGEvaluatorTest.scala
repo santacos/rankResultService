@@ -97,7 +97,7 @@ class NDCGEvaluatorTest extends FunSuiteSpark with Matchers with ProxyMockFactor
 
       val allUserItems = sqlContext.createDataFrame(Seq((1,1))).toDF("user", "item")
 
-      evaluator.evaluateWithModel(dataset, model, allUserItems)
+      evaluator.evaluateWithModel(dataset, model)
     }
   }
 
@@ -116,27 +116,19 @@ class NDCGEvaluatorTest extends FunSuiteSpark with Matchers with ProxyMockFactor
 
   test("evaluation evaluate correctly") {
     val userFactors: DataFrame = sqlContext.createDataFrame(Seq(
-      (1, Seq(1f, 2f)),
-      (2, Seq(1f, 2f))
+      (1, Seq(1f, 100f)),
+      (2, Seq(100f, 1f))
     )).toDF("id", "features")
 
     val itemFactors: DataFrame = sqlContext.createDataFrame(Seq(
-      (1, Seq(1f, 2f)),
-      (2, Seq(1f, 2f))
+      (1, Seq(1f, 100f)),
+      (2, Seq(100f, 75f)),
+      (3, Seq(60f, 40f))
     )).toDF("id", "features")
 
-    class StubbedALSModel extends ALSModel("als", rank = 10, userFactors, itemFactors) {
-      override def transform(dataset: DataFrame): DataFrame = sqlContext.createDataFrame(Seq(
-        (1, 1, 100D),
-        (1, 2, 99D),
-        (1, 3, 1D),
-        (2, 1, 1D),
-        (2, 2, 100D),
-        (2, 3, 98D)
-      )).toDF("user", "item", "prediction")
-    }
+    // user 1: 1 2 3, user 2: -> 2 3 1
 
-    val model = new StubbedALSModel
+    val model = new ALSModel("als", rank = 2, userFactors, itemFactors)
 
     val testSet = sqlContext.createDataFrame(Seq(
       (1, 1, 100D),
@@ -145,21 +137,12 @@ class NDCGEvaluatorTest extends FunSuiteSpark with Matchers with ProxyMockFactor
       (2, 3, 100D)
     )).toDF("user", "item", "rating")
 
-    val allUserItems = sqlContext.createDataFrame(Seq(
-      (1, 1),
-      (1, 2),
-      (1, 3),
-      (2, 1),
-      (2, 2),
-      (2, 3)
-    )).toDF("user", "item")
-
     implicit val doubleEquality = TolerantNumerics.tolerantDoubleEquality(0.001)
 
     val evaluator = new NDCGEvaluator()
       .setK(3)
       .setRecommendingThreshold(10D)
 
-    evaluator.evaluateWithModel(testSet, model, allUserItems) should equal (0.8154648767857287)
+    evaluator.evaluateWithModel(testSet, model) should equal (0.8154648767857287)
   }
 }

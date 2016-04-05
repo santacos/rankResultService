@@ -7,5 +7,5 @@ import org.apache.spark.sql.DataFrame
   * Created by ibosz on 15/3/59.
   */
 trait RankingMetricEvaluator extends Evaluator {
-  def evaluateWithModel(dataset: DataFrame, model: Model[_], allUserItem: DataFrame): Double
+  def evaluateWithModel(dataset: DataFrame, model: Model[_]): Double
 }

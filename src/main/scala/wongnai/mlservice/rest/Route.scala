@@ -3,7 +3,6 @@ import akka.http.scaladsl.server.Directives._
 import wongnai.mlservice.Spark
 import wongnai.mlservice.api.searchranking.{NDCGParams, CrossValidationParams, ALSParamGrid}
 import wongnai.mlservice.rest.controller.PersonalizationController
-import akka.http.scaladsl.server.directives.FormFieldDirectives.FieldMagnet
 
 /**
   * Created by ibosz on 24/3/59.

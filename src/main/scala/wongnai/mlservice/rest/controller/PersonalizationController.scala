@@ -20,7 +20,7 @@ object PersonalizationController {
     alpha = Array(10.0),
     regParam = Array(10.0)
   )
-  var ndcgParams = NDCGParams(recommendingThreshold = 10.0, k = 2 )
+  var ndcgParams = NDCGParams(recommendingThreshold = 1.0, k = 2 )
   var crossValidationParams = CrossValidationParams(numFolds = 3)
 
   def train(sourcePath: String): Unit = {
@@ -54,13 +54,21 @@ object PersonalizationController {
     val userItemsArray = items.map(item => (user, item))
     val userItemDF = sqlContext.createDataFrame(userItemsArray).toDF("user", "item")
 
-    val NaNToZero = udf { prediction: Double => if(prediction.isNaN) 0D else prediction }
+    val StrangeBehaviourToZero = udf { prediction: Double =>
+      if(prediction.isNaN || prediction < 0) 0D else prediction }
 
-    val sortedItemsDF = recommendationModel.transform(userItemDF)
-      .withColumn("prediction", NaNToZero(col("prediction")))
+    val itemsDF = recommendationModel.transform(userItemDF)
+      .withColumn("prediction", StrangeBehaviourToZero(col("prediction")))
+
+    val zeroScoreItemsDF = itemsDF.filter(col("prediction") === 0D)
+      .map { case Row(_, item: Int, _) => item }
+
+    val sortedItemsDF = itemsDF
+      .filter(col("prediction") !== 0D)
       .sort(desc("prediction"))
+      .map { case Row(_, item: Int, _) => item }
 
-    val rankedItems = sortedItemsDF.map { case Row(_, item: Int, _) => item }.collect.toList
+    val rankedItems = (sortedItemsDF ++ zeroScoreItemsDF).collect.toList
 
     PersonalizedSearchResult(user, rankedItems)
   }

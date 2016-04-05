@@ -4,8 +4,11 @@ import org.apache.spark.Logging
 import org.apache.spark.ml.Model
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.param.shared._
+import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
+import org.apache.spark.mllib.recommendation.{MatrixFactorizationModel, Rating}
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{DoubleType, FloatType}
 import org.apache.spark.sql.{DataFrame, Row}
 import org.json4s._
@@ -77,7 +80,7 @@ class NDCGEvaluator(override val uid: String)
     0.0D
   }
 
-  override def evaluateWithModel(dataset: DataFrame, model: Model[_], allUserItems: DataFrame): Double = {
+  override def evaluateWithModel(dataset: DataFrame, model: Model[_]): Double = {
     val schema = dataset.schema
 
     val labelColName = $(labelCol)
@@ -85,27 +88,38 @@ class NDCGEvaluator(override val uid: String)
     require(labelType == FloatType || labelType == DoubleType,
       s"Label column $labelColName must be of type float or double, but not $labelType")
 
-    val predictedTable = model.transform(allUserItems)
+    val toDouble = udf[Double, Int]( _.toDouble)
 
-    val recommended = predictedTable
-        .select($(userCol), $(itemCol), $(predictionCol))
-        .map{ case Row(user, item: Int, prediction: Double) => user -> (item, prediction) }
-        .aggregateByKey(Array[(Int, Double)]())(
-          (itemAndPredictions, itemAndPrediction) => itemAndPredictions :+ itemAndPrediction,
-          (itemAndPredictions1, itemAndPredictions2) => itemAndPredictions1 ++ itemAndPredictions2 )
-        .map {
-          case (user, itemAndPredictions: Array[(Int, Double)]) => {
-            val recommendedItems = itemAndPredictions
-              .sortBy{ case (_, prediction) => prediction }(Ordering.Double.reverse)
-              .map{ case (item, prediction) => item }
+    val recommended = recommendProductsForUsers($(k), model.asInstanceOf[ALSModel])
+    val groundTruth = findGroundTruthSet(
+      dataset.withColumn($(labelCol), toDouble(col($(labelCol)))))
 
-            (user, recommendedItems)
-          }
-        }
+    val predictionAndLabels = recommended.join(groundTruth)
+      .map { case (_, predictionAndLabel) => predictionAndLabel }
 
-    val groundTruth = dataset
-        .select($(userCol), $(itemCol), $(labelCol))
-        .map{ case Row(user, item: Int, label: Double) => user -> (item, label) }
+    ndcgAt($(k), predictionAndLabels)
+  }
+
+  private def recommendProductsForUsers(num: Int, model: ALSModel): RDD[(Int, Array[Int])] = {
+    val rank = model.rank
+    val userFeatures = model.userFactors.map {
+      case Row(id: Int, factors: Seq[Float]) => (id, factors.toArray.map(_.toDouble))}
+    val productFeatures = model.itemFactors.map {
+      case Row(id: Int, factors: Seq[Float]) => (id, factors.toArray.map(_.toDouble))}
+
+    val matrixFactorizationModel =
+      new MatrixFactorizationModel(rank, userFeatures, productFeatures)
+
+    matrixFactorizationModel.recommendProductsForUsers($(k))
+      .map { case (user: Int, ratings: Array[Rating]) => {
+          val items = ratings.map(_.product)
+          (user, items)}}
+  }
+
+  private def findGroundTruthSet(dataset: DataFrame) = {
+    dataset
+      .select($(userCol), $(itemCol), $(labelCol))
+      .map{ case Row(user: Int, item: Int, label: Double) => user -> (item, label) }
       .aggregateByKey(Array[Int]())(
         (itemAndLabels, itemAndLabel) =>
           if(itemAndLabel._2 >= $(recommendingThreshold))
@@ -113,11 +127,6 @@ class NDCGEvaluator(override val uid: String)
           else
             itemAndLabels,
         (itemAndLabels1, itemAndLabels2) => itemAndLabels1 ++ itemAndLabels2 )
-
-    val predictionAndLabels = recommended.join(groundTruth)
-      .map { case (_, predictionAndLabel) => predictionAndLabel }
-
-    ndcgAt($(k), predictionAndLabels)
   }
 
   private def ndcgAt(
