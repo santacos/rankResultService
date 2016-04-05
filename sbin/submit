@@ -1,0 +1,17 @@
+#! /bin/sh
+
+# kill running job
+echo 'killing running job...'
+sh killer
+
+echo '*******************************' && echo
+
+# submit spark job
+open 'http://104.155.200.162:8088'
+echo 'submiting spark job using recently uploaded jar...'
+
+gs_bucket='gs://dataproc-e05f76e4-9b48-40cb-a488-8269e8a72d51-asia/'
+
+gcloud dataproc jobs submit spark \
+ --cluster recommendation-cluster \
+ --jar $gs_bucket/ResultRankingService-assembly-1.0.jar

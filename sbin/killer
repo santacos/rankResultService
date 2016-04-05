@@ -1,0 +1,5 @@
+#! /bin/sh
+
+running_job=`gcloud dataproc jobs list | grep RUNNING | egrep -o '[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}'`
+
+gcloud dataproc jobs kill $(echo $running_job) -q
