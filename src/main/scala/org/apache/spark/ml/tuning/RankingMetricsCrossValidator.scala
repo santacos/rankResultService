@@ -40,7 +40,9 @@ class RankingMetricsCrossValidator extends CrossValidator {
       var i = 0
       while (i < numModels) {
         //TODO: remove hardcoded select. set params instead.
-        val allUserItem = dataset.select("user").join(dataset.select("item")).distinct
+        val allUserItem = dataset.select("user")
+          .sample(false, 0.1169)
+          .join(dataset.select("item")).distinct
         val metric = eval
           .evaluateWithModel(
             models(i).transform(validationDataset, epm(i)), models(i), allUserItem)
