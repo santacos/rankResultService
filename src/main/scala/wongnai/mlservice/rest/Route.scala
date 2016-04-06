@@ -79,6 +79,11 @@ trait Route extends JsonSupport {
           complete(PersonalizationController.ndcgParams)
         }
       }
+    } ~
+    path("personalize" / "model" / "tranined-result") {
+      get {
+        complete(PersonalizationController.trainedModelResult.mkString("\n"))
+      }
     }
 
 }

@@ -5,7 +5,6 @@ import org.apache.spark.ml.Model
 import org.apache.spark.ml.evaluation.{Evaluator, RankingMetricEvaluator}
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.sql.DataFrame
-
 /**
   * Created by ibosz on 15/3/59.
   */
@@ -30,6 +29,11 @@ class RankingMetricsCrossValidator extends CrossValidator {
     val numModels = epm.length
     val metrics = new Array[Double](epm.length)
     val splits = MLUtils.kFold(dataset.rdd, $(numFolds), 0)
+
+    import wongnai.mlservice.rest.controller.PersonalizationController.trainedModelResult
+
+    trainedModelResult = List[String]()
+
     splits.zipWithIndex.foreach { case ((training, validation), splitIndex) =>
       val trainingDataset = sqlCtx.createDataFrame(training, schema).cache()
       val validationDataset = sqlCtx.createDataFrame(validation, schema).cache()
@@ -46,6 +50,10 @@ class RankingMetricsCrossValidator extends CrossValidator {
         val metric = eval
           .evaluateWithModel(
             models(i).transform(validationDataset, epm(i)), models(i), allUserItem)
+
+        val currentTrainedModelResult = s"ndcg = $metric for model trained with ${epm(i)}"
+
+        trainedModelResult = trainedModelResult :+ currentTrainedModelResult
 
         logDebug(s"Got metric $metric for model trained with ${epm(i)}.")
         metrics(i) += metric
