@@ -1,0 +1,19 @@
+#! /bin/sh
+
+# assemble jar file
+echo 'assembling fat jar...'
+sbt assembly
+
+# determine fat jar location and google cloud storage bucket
+jar_path='../target/scala-2.10/ResultRankingService-assembly-1.0.jar'
+gs_bucket='gs://dataproc-e05f76e4-9b48-40cb-a488-8269e8a72d51-asia/'
+
+echo '*******************************' && echo
+
+# upload 
+echo 'uploading assembled jar file to google cloud storage...'
+gsutil cp $jar_path $gs_bucket
+
+echo '*******************************' && echo
+
+sbin/submit
