@@ -16,4 +16,4 @@ gsutil cp $jar_path $gs_bucket
 
 echo '*******************************' && echo
 
-sh submit
+sbin/submit

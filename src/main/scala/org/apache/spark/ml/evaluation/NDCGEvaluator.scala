@@ -104,8 +104,11 @@ class NDCGEvaluator(override val uid: String)
     val rank = model.rank
     val userFeatures = model.userFactors.map {
       case Row(id: Int, factors: Seq[Float]) => (id, factors.toArray.map(_.toDouble))}
+      .sample(true, 0.001)
+
     val productFeatures = model.itemFactors.map {
       case Row(id: Int, factors: Seq[Float]) => (id, factors.toArray.map(_.toDouble))}
+      .sample(true, 0.001)
 
     val matrixFactorizationModel =
       new MatrixFactorizationModel(rank, userFeatures, productFeatures)

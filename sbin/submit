@@ -2,7 +2,7 @@
 
 # kill running job
 echo 'killing running job...'
-sh killer
+sbin/kill
 
 echo '*******************************' && echo
 

@@ -15,13 +15,13 @@ object PersonalizationController {
   var recommendationModel: Model[_] = _
 
   var alsParamGrid: ALSParamGrid = ALSParamGrid(
-    maxIter = Array(10),
-    rank = Array(10),
-    alpha = Array(10.0),
-    regParam = Array(10.0)
+    maxIter = Array(20),
+    rank = Array(20),
+    alpha = Array(0.01, 0.05, 0.1),
+    regParam = Array(1.0, 10.0, 100.0)
   )
-  var ndcgParams = NDCGParams(recommendingThreshold = 1.0, k = 2 )
-  var crossValidationParams = CrossValidationParams(numFolds = 3)
+  var ndcgParams = NDCGParams(recommendingThreshold = 2.0, k = 20 )
+  var crossValidationParams = CrossValidationParams(numFolds = 5)
 
   def train(sourcePath: String): Unit = {
     val getItem = udf { (entity: Int, entity_2: Int) => {
