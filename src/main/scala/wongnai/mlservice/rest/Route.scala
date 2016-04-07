@@ -80,7 +80,7 @@ trait Route extends JsonSupport {
         }
       }
     } ~
-    path("personalize" / "model" / "tranined-result") {
+    path("personalize" / "model" / "summary") {
       get {
         complete(PersonalizationController.trainedModelResult.mkString("\n"))
       }
