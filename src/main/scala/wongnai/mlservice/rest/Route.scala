@@ -1,7 +1,10 @@
 package wongnai.mlservice.rest
 import akka.http.scaladsl.server.Directives._
+import wongnai.mlservice.Spark
 import wongnai.mlservice.api.searchranking.{NDCGParams, CrossValidationParams, ALSParamGrid}
 import wongnai.mlservice.rest.controller.PersonalizationController
+
+import scala.concurrent.Future
 
 /**
   * Created by ibosz on 24/3/59.
@@ -19,7 +22,22 @@ trait Route extends JsonSupport {
       post {
         entity(as[FileLocation]) { fileLocation =>
           complete {
-            PersonalizationController.train(fileLocation.path)
+            import scala.concurrent.ExecutionContext.Implicits.global
+
+            Future { PersonalizationController.train(fileLocation.path) }
+
+            "request success"
+          }
+        }
+      }
+    } ~
+    path("personalize" / "train-without-eval") {
+      post {
+        entity(as[FileLocation]) { fileLocation =>
+          complete {
+            import scala.concurrent.ExecutionContext.Implicits.global
+
+            Future { PersonalizationController.trainWithoutEval(fileLocation.path) }
 
             "request success"
           }
@@ -83,6 +101,17 @@ trait Route extends JsonSupport {
     path("personalize" / "model" / "summary") {
       get {
         complete(PersonalizationController.trainedModelResult.mkString("\n"))
+      }
+    } ~
+    path("personalize" / "checkpoint") {
+      post {
+        entity(as[FileLocation]) { fileLocation =>
+          complete {
+            Spark.sparkContext.setCheckpointDir(fileLocation.path)
+
+            s"checkpoint is set to ${fileLocation.path}"
+          }
+        }
       }
     }
 
