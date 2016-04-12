@@ -77,62 +77,45 @@ object PersonalizationController {
 
     recommendationModel = new ALS()
       .setImplicitPrefs(true)
-      .setAlpha(1.0)
-      .setRegParam(1.0)
+      .setRank(100)
+      .setMaxIter(20)
+      .setAlpha(100.0)
+      .setRegParam(0.1)
       .fit(dataset)
   }
 
   def rank(user: Int, items: List[Int]): PersonalizedSearchResult = {
-//    val userItemsArray = items.map(item => (user, item))
-//    val userItemDF = sqlContext.createDataFrame(userItemsArray).toDF("user", "item")
-//
-//    val NaNToZero = udf { prediction: Double => if(prediction.isNaN) 0D else prediction }
-
     val model = recommendationModel.asInstanceOf[ALSModel]
-
-
-//    val itemsDF = recommendationModel.transform(userItemDF)
-//      .withColumn("prediction", NaNToZero(col("prediction")))
-//      .persist()
-//
-//    val rankedItems = itemsDF
-//      .filter(col("prediction") > 0)
-//      .map { case Row(_, item: Int, score: Double) => (item, score) }
-//      .collect.toList
-//      .sortBy(_._2)(Ordering.Double.reverse)
-//      .map(_._1)
-//
-//    val untouchedItems = itemsDF
-//      .filter(col("prediction") === 0)
-//      .map { case Row(_, item: Int, score: Double) => (item, score) }
-//      .collect.toList
-//      .map(_._1)
-//
-//    val negativeItems = itemsDF
-//      .filter(col("prediction") < 0)
-//      .map { case Row(_, item: Int, score: Double) => (item, score) }
-//      .collect.toList
-//      .sortBy(_._2)(Ordering.Double.reverse)
-//      .map(_._1)
-
-//    itemsDF.unpersist()
-
-//    PersonalizedSearchResult(user, rankedItems ++ untouchedItems ++ negativeItems)
 
     val rank = model.rank
     val userFeatures = model.userFactors.map {
       case Row(id: Int, factors: Seq[Float]) => (id, factors.toArray.map(_.toDouble))}
-    val productFeatures = model.itemFactors
+
+    val itemFactors = model.itemFactors.persist()
+
+
+    val productFeatures = itemFactors
       .filter(col("id").isin(items: _*))
       .map {
         case Row(id: Int, factors: Seq[Float]) => (id, factors.toArray.map(_.toDouble))}
 
-    val rankedItems = new MatrixFactorizationModel(rank, userFeatures, productFeatures)
+    val matrixFactorizationModel = new MatrixFactorizationModel(rank, userFeatures, productFeatures)
+    val rankedItems = matrixFactorizationModel
       .recommendProducts(user, items.length)
       .map(_.product)
       .toList
 
-    PersonalizedSearchResult(user, rankedItems)
+    val notToRankItems = items diff {
+      val knownItems = itemFactors.map { case Row(id: Int, _) => id }.collect
+      val nonNegativePredictionItems = items
+        .filter(item => matrixFactorizationModel.predict(user, item) > 0)
+
+      knownItems ++ nonNegativePredictionItems
+    }
+
+    itemFactors.unpersist()
+
+    PersonalizedSearchResult(user, rankedItems ++ notToRankItems)
   }
 
   def save(path: String): Unit = {
