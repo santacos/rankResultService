@@ -7,10 +7,10 @@ sbin/kill
 echo '*******************************' && echo
 
 # submit spark job
-open 'http://104.155.200.162:8088'
+open 'http://104.155.219.53:8088'
 echo 'submiting spark job using recently uploaded jar...'
 
-gs_bucket='gs://dataproc-e05f76e4-9b48-40cb-a488-8269e8a72d51-asia/'
+gs_bucket='gs://dataproc-f5363994-7330-4c34-ae81-9b62640328ae-asia'
 
 gcloud dataproc jobs submit spark \
  --cluster recommendation-cluster \

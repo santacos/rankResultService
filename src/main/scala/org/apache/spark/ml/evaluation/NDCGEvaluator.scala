@@ -110,7 +110,6 @@ class NDCGEvaluator(override val uid: String)
         groundTruthFilter(col($(itemCol)), col($(labelCol)))
           .alias("ground_truth"))
 
-
     val predictionAndLabels = recommendedTable.join(groundTruthTable, $(userCol))
       .select("recommended", "ground_truth")
       .map {

@@ -1,5 +1,5 @@
 #! /bin/sh
 
 curl -XPOST -H "Content-type: application/json" -d '{
-    "path": "gs://dataproc-e05f76e4-9b48-40cb-a488-8269e8a72d51-asia/wongnai-logfile/entity-access-log-201601.log"
-}' '104.155.200.162:8080/personalize/train-without-eval'
+    "path": "gs://dataproc-f5363994-7330-4c34-ae81-9b62640328ae-asia/wongnai-logfile/entity-access-log-201601.log"
+}' '104.155.219.53:8080/personalize/train-without-eval'
