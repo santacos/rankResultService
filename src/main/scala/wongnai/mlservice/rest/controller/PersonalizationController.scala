@@ -66,26 +66,16 @@ object PersonalizationController {
     val matrixFactorizationModel = new MatrixFactorizationModel(rank, userFeatures, productFeatures)
     val rankedItems = matrixFactorizationModel
       .recommendProducts(user, items.length)
-      .map(_.product)
       .toList
 
-    val notToRankItems = items diff {
-      val knownItems = itemFactors.map { case Row(id: Int, _) => id }.collect
-      val nonNegativePredictionItems = items
-        .filter(item => {
-          val tryPrediction = Try(matrixFactorizationModel.predict(user, item))
-          tryPrediction match {
-            case Success(prediction) => prediction > 0
-            case _ => false
-          }
-        })
+    val positiveItems = rankedItems.filter(_.rating > 0).map(_.product)
+    val negativeItems = rankedItems.filter(_.rating <= 0).map(_.product)
 
-      knownItems ++ nonNegativePredictionItems
-    }
+    val notToRankItems = items diff positiveItems
 
     itemFactors.unpersist()
 
-    PersonalizedSearchResult(user, rankedItems ++ notToRankItems)
+    PersonalizedSearchResult(user, positiveItems ++ notToRankItems)
   }
 
   def save(path: String): Unit = {
