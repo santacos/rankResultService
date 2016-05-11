@@ -69,7 +69,6 @@ object PersonalizationController {
       .toList
 
     val positiveItems = rankedItems.filter(_.rating > 0).map(_.product)
-    val negativeItems = rankedItems.filter(_.rating <= 0).map(_.product)
 
     val notToRankItems = items diff positiveItems
 
