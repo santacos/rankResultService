@@ -8,7 +8,7 @@ import com.datastax.spark.connector._
   * Created by ibosz on 12/5/59.
   */
 class CassandraImporter(sc: SparkContext, keyspace: String, table: String) extends Importer {
-  override def importData(): RDD[Any] = {
+  override def importData(): RDD[(Int,Int,Double)] = {
     sc.cassandraTable(keyspace, table)
       .filter(isNotNull("user"))
       .filter(isNotNull("entity"))
@@ -29,6 +29,6 @@ class CassandraImporter(sc: SparkContext, keyspace: String, table: String) exten
     val nullableEntity = row.get[Option[Int]]("entity_2")
     val item = nullableEntity.getOrElse(row.get[Int]("entity"))
 
-    (user, item) -> 1
+    (user, item) -> 1D
   }
 }

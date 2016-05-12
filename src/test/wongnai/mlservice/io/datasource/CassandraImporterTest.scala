@@ -12,7 +12,6 @@ class CassandraImporterTest extends FunSuite with BeforeAndAfterEach with Matche
 
   override def beforeEach() {
     CassandraConnector(sparkConfig).withSessionDo { session =>
-      session.execute(s"TRUNCATE wongnai_log.entity_access")
       session.execute(s"CREATE KEYSPACE IF NOT EXISTS wongnai_log WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1 }")
       session.execute(s"CREATE TABLE IF NOT EXISTS wongnai_log.entity_access (key int, time timeuuid, entity text, entity_2 text, session text, type text, unix_time bigint, user text, PRIMARY KEY (key, time));")
     }
@@ -32,7 +31,7 @@ class CassandraImporterTest extends FunSuite with BeforeAndAfterEach with Matche
     val logs = new CassandraImporter(sparkContext, "wongnai_log", "entity_access").importData().collect()
 
     // user, item, rating
-    logs shouldBe Array((55964, 205850, 1))
+    logs shouldBe Array((55964, 205850, 1D))
   }
 
   test("ImportData with null user") {
@@ -46,7 +45,7 @@ class CassandraImporterTest extends FunSuite with BeforeAndAfterEach with Matche
     val logs = new CassandraImporter(sparkContext, "wongnai_log", "entity_access").importData().collect()
 
     // user, item, rating
-    logs should contain theSameElementsAs Array((1, 1, 1), (2, 1, 1))
+    logs should contain theSameElementsAs Array((1, 1, 1D), (2, 1, 1D))
   }
 
   test("ImportData with null entity"){
@@ -61,7 +60,7 @@ class CassandraImporterTest extends FunSuite with BeforeAndAfterEach with Matche
     val logs = new CassandraImporter(sparkContext, "wongnai_log", "entity_access").importData().collect()
 
     // user, item, rating
-    logs should contain theSameElementsAs Array((2, 1, 1), (2, 2, 1), (3, 4, 1))
+    logs should contain theSameElementsAs Array((2, 1, 1D), (2, 2, 1D), (3, 4, 1D))
 
   }
 
@@ -76,7 +75,7 @@ class CassandraImporterTest extends FunSuite with BeforeAndAfterEach with Matche
     val logs = new CassandraImporter(sparkContext, "wongnai_log", "entity_access").importData().collect()
 
     // user, item, rating
-    logs should contain theSameElementsAs Array((1, 1, 1), (1, 2, 1), (2, 1, 1), (2, 3, 1))
+    logs should contain theSameElementsAs Array((1, 1, 1D), (1, 2, 1D), (2, 1, 1D), (2, 3, 1D))
 
   }
 
@@ -92,7 +91,7 @@ class CassandraImporterTest extends FunSuite with BeforeAndAfterEach with Matche
     val logs = new CassandraImporter(sparkContext, "wongnai_log", "entity_access").importData().collect()
 
     // user, item, rating
-    logs should contain theSameElementsAs Array((1, 2, 2), (2, 1, 2), (3, 4, 1))
+    logs should contain theSameElementsAs Array((1, 2, 2D), (2, 1, 2D), (3, 4, 1D))
 
   }
 
