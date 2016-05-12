@@ -1,0 +1,5 @@
+#! /bin/sh
+
+curl -XPOST -H "Content-type: application/json" -d '{
+    "path": "hdfs://recommendation-cluster-m/"
+}' '104.155.200.162:8080/personalize/checkpoint'
