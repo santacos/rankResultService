@@ -7,10 +7,10 @@ import com.datastax.spark.connector._
 /**
   * Created by ibosz on 12/5/59.
   */
-class CassandraImporter(sc: SparkContext, keyspace: String, table: String) extends Importer {
+class CassandraImporter(sc: SparkContext, keyspace: String, table: String) {
   type Rating = (Int, Int, Double)
 
-  override def importData(): RDD[Rating] = {
+  def importData(): RDD[Rating] = {
     sc.cassandraTable(keyspace, table)
       .filter(isNotNull("user"))
       .filter(isNotNull("entity"))
