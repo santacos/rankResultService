@@ -1,4 +1,4 @@
-package wongnai.mlservice.io.datasource
+package wongnai.mlservice.io
 
 import com.datastax.spark.connector.{SomeColumns, _}
 import com.datastax.spark.connector.cql.CassandraConnector
@@ -13,8 +13,14 @@ class CassandraImporterTest extends FunSuite with BeforeAndAfterEach with Matche
   override def beforeEach() {
     CassandraConnector(sparkConfig).withSessionDo { session =>
       session.execute(s"TRUNCATE wongnai_log.entity_access")
-      session.execute(s"CREATE KEYSPACE IF NOT EXISTS wongnai_log WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1 }")
-      session.execute(s"CREATE TABLE IF NOT EXISTS wongnai_log.entity_access (key int, time timeuuid, entity text, entity_2 text, session text, type text, unix_time bigint, user text, PRIMARY KEY (key, time));")
+      session.execute(
+        s"CREATE KEYSPACE IF NOT EXISTS wongnai_log " +
+        "WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1 } " +
+        "AND durable_writes = true;")
+      session.execute(
+        s"CREATE TABLE IF NOT EXISTS wongnai_log.entity_access " +
+         "(key int, time timeuuid, entity text, entity_2 text, session text, " +
+         "type text, unix_time bigint, user text, PRIMARY KEY (key, time));")
     }
   }
 

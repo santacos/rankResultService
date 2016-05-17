@@ -1,4 +1,4 @@
-package wongnai.mlservice.io.datasource
+package wongnai.mlservice.io
 
 import org.apache.spark.rdd.RDD
 
