@@ -6,8 +6,10 @@ import org.apache.spark.ml.tuning.CrossValidatorModel
 import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.functions._
+import wongnai.mlservice.Spark
 import wongnai.mlservice.Spark._
 import wongnai.mlservice.api.searchranking.{ALSParamGrid, CrossValidationParams, NDCGParams, model}
+import wongnai.mlservice.io.datasource.CassandraImporter
 import wongnai.mlservice.rest.PersonalizedSearchResult
 
 import scala.util.{Success, Try}
@@ -38,7 +40,10 @@ object PersonalizationController {
   }
 
   def trainWithoutEval(sourcePath: String): Unit = {
-    val dataset = datasetFromCSV(sourcePath)
+    import Spark.sqlContext.implicits._
+    val dataset = new CassandraImporter(sparkContext, "wongnai_log", "entity_access")
+      .importData()
+      .toDF("user","item","rating")
 
     recommendationModel = new ALS()
       .setImplicitPrefs(true)
