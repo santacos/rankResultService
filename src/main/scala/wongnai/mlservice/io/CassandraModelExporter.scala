@@ -8,18 +8,28 @@ import org.apache.spark.rdd.RDD
 /**
   * Created by ibosz on 17/5/59.
   */
-class CassandraModelExporter(sc: SparkContext, keyspace: String, table: String) {
+class CassandraModelExporter(sc: SparkContext, keyspace: String, userTable: String, itemTable: String) {
   def exportModel(
     rank: Int,
     userFactors: RDD[(Int, Array[Double])],
     itemFactors: RDD[(Int, Array[Double])]): Unit = {
 
-    type Factor = (Int, Array[Double])
+    val featureToVec: PartialFunction[(Int, Array[Double]), (Int, Vector[Double])] = {
+      case (id: Int, features: Array[Double]) =>
+        (id, features.toVector) }
 
-    (userFactors cartesian itemFactors)
-      .map {
-        case (user: Factor, item: Factor) =>
-          (user._1, item._1, blas.ddot(rank, user._2, 1, item._2, 1)) }
-      .saveToCassandra(keyspace, table, SomeColumns("user_id", "item_id", "score"))
+    userFactors
+      .map(featureToVec)
+      .saveToCassandra(keyspace, userTable, SomeColumns("user_id", "features"))
+
+    itemFactors
+      .map(featureToVec)
+      .saveToCassandra(keyspace, itemTable, SomeColumns("item_id", "features"))
   }
+
+
+
+
+
+
 }

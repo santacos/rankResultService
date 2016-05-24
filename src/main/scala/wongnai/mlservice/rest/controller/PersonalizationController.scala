@@ -58,7 +58,7 @@ object PersonalizationController {
       case Row(id: Int, factors: Seq[Float]) => (id, factors.toArray.map(_.toDouble))
     }
 
-    new CassandraModelExporter(sparkContext, "wongnai", "recommendation")
+    new CassandraModelExporter(sparkContext, "wongnai", "user_features", "item_features")
         .exportModel(
           model.rank,
           model.userFactors.map(factorDFToRDD),
@@ -68,7 +68,7 @@ object PersonalizationController {
   def rank(user: Int, items: List[Int]): PersonalizedSearchResult = {
     val scoredItems = new CassandraModelReader(sparkContext, "wongnai", "recommendation")
         .getPredictions(user, items)
-        .map{ case (user, item, score) => Rating(user, item, score.toFloat) }
+        .map{ case (user: Int, item: Int, score: Double) => Rating(user, item, score.toFloat) }
 
     val positiveItems = scoredItems
       .filter(_.rating > 0)
