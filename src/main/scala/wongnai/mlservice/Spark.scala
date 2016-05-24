@@ -16,7 +16,6 @@ object Spark extends App {
     .set("spark.cassandra.auth.username"  , config.getString("cassandra.username"))
     .set("spark.cassandra.auth.password"  , config.getString("cassandra.password"))
 
-
   val sparkContext: SparkContext = new SparkContext(sparkConf)
   val sqlContext: SQLContext = new SQLContext(sparkContext)
 

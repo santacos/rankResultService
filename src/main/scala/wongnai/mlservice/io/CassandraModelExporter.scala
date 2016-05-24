@@ -22,5 +22,4 @@ class CassandraModelExporter(sc: SparkContext, keyspace: String, table: String) 
           (user._1, item._1, blas.ddot(rank, user._2, 1, item._2, 1)) }
       .saveToCassandra(keyspace, table, SomeColumns("user_id", "item_id", "score"))
   }
-
 }

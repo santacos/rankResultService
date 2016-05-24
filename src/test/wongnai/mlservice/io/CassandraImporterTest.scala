@@ -102,6 +102,18 @@ class CassandraImporterTest extends FunSuite with BeforeAndAfterEach with Matche
 
   }
 
+  test("ImportData found empty string") {
+    sparkContext.parallelize(Seq(
+      (2016041320, "20d78c50-0174-11e6-a558-e13cbb0c8499", "4", null, "F57032D4A98460EF8A5A2DF91E2485A4", ""),
+      (2016032912, "4942f9a0-f56b-11e5-af13-6b340b88d947","205850", "", "B14C31D0DCAB4ACF67A1C027021AE602", "55964"),
+      (2016041319, "20d78c50-0174-11e6-a558-e13cbb0c8497", "", "", "F57032D4A98460EF8A5A2DF91E2485A4", "2"),
+      (2016041319, "20d78c50-0174-11e6-a558-e13cbb0c8097", "", null, "F57032D4A98460EF8A5A2DF91E2485A4", "2")
+    )).saveToCassandra("wongnai_log", "entity_access", SomeColumns("key", "time", "entity", "entity_2", "session", "user"))
 
+    val logs = new CassandraImporter(sparkContext, "wongnai_log", "entity_access").importData().collect()
+
+    // user, item, rating
+    logs shouldBe Array((55964, 205850, 1))
+  }
 
 }
