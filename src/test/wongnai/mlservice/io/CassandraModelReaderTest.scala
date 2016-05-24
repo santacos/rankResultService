@@ -12,16 +12,28 @@ class CassandraModelReaderTest extends FunSuite with BeforeAndAfterEach with Mat
 
   override def beforeEach() {
     CassandraConnector(sparkConfig).withSessionDo { session =>
-      session.execute(s"TRUNCATE wongnai.recommendation")
       session.execute(
         s"CREATE KEYSPACE IF NOT EXISTS wongnai " +
           "WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 1 } " +
           "AND durable_writes = true;")
+
       session.execute(s"CREATE TABLE IF NOT EXISTS wongnai.recommendation(" +
         "user_id int, " +
         "item_id int, " +
         "score double, " +
         "PRIMARY KEY (user_id, item_id));")
+
+      session.execute(s"CREATE TABLE IF NOT EXISTS wongnai.user_features(" +
+        "user_id int PRIMARY KEY, " +
+        "features list<double> ); ")
+
+      session.execute(s"CREATE TABLE IF NOT EXISTS wongnai.item_features(" +
+        "item_id int PRIMARY KEY, " +
+        "features list<double> ); ")
+
+      session.execute(s"TRUNCATE wongnai.recommendation")
+      session.execute(s"TRUNCATE wongnai.user_features")
+      session.execute(s"TRUNCATE wongnai.item_features")
     }
   }
 
@@ -72,4 +84,24 @@ class CassandraModelReaderTest extends FunSuite with BeforeAndAfterEach with Mat
     )
   }
 
+  test("get predictions from uncomputed user-item pairs") {
+    sparkContext.parallelize(Seq(
+      (1, Vector(2.0, 1.0, 4.0))
+    )).saveToCassandra("wongnai", "user_features", SomeColumns("user_id", "features"))
+
+    sparkContext.parallelize(Seq(
+      (1, Vector(3.0, 2.0, 1.0)),
+      (2, Vector(2.0, 1.0, 5.0))
+    )).saveToCassandra("wongnai", "item_features", SomeColumns("item_id", "features"))
+
+    val modelReader =
+      new CassandraModelReader(sparkContext, "wongnai", "recommendation")
+
+    val predictions = modelReader.getPredictions(userId = 1, itemIds = List(1, 2))
+
+    predictions should contain theSameElementsAs Array(
+      (1, 1, 12.0),
+      (1, 2, 25.0)
+    )
+  }
 }

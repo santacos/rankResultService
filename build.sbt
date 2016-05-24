@@ -28,8 +28,6 @@ libraryDependencies ++= {
     "org.scalamock"     %% "scalamock-scalatest-support"          % "3.2.2" % "test",
     "com.datastax.spark" %% "spark-cassandra-connector"           % "1.6.0-M2",
     "com.datastax.spark" %% "spark-cassandra-connector-embedded"  % "1.6.0-M2"
-//    "com.gilt"           %% "gfc-timeuuid"                        % "0.0.5",
-//    "com.github.nscala-time" %% "nscala-time"                     % "2.12.0"
   )
 }
 
