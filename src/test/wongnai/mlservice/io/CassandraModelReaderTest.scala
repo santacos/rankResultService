@@ -104,4 +104,61 @@ class CassandraModelReaderTest extends FunSuite with BeforeAndAfterEach with Mat
       (1, 2, 25.0)
     )
   }
+
+  test("get predictions from uncomputed user-item pairs should save result to recommendation table"){
+    sparkContext.parallelize(Seq(
+      (1, Vector(2.0, 1.0, 4.0))
+    )).saveToCassandra("wongnai", "user_features", SomeColumns("user_id", "features"))
+
+    sparkContext.parallelize(Seq(
+      (1, Vector(3.0, 2.0, 1.0)),
+      (2, Vector(2.0, 1.0, 5.0))
+    )).saveToCassandra("wongnai", "item_features", SomeColumns("item_id", "features"))
+
+    val modelReader =
+      new CassandraModelReader(sparkContext, "wongnai", "recommendation")
+
+    modelReader.getPredictions(userId = 1, itemIds = List(1, 2))
+
+    val recommendation = sparkContext
+      .cassandraTable[(Int, Int, Double)]("wongnai", "recommendation").collect
+
+    recommendation should contain theSameElementsAs Array(
+      (1, 1, 12.0),
+      (1, 2, 25.0)
+    )
+  }
+
+  test("get predictions from computed user-item pairs if exists "){
+    sparkContext.parallelize(Seq(
+      (1, Vector(2.0, 1.0, 4.0))
+    )).saveToCassandra("wongnai", "user_features", SomeColumns("user_id", "features"))
+
+    sparkContext.parallelize(Seq(
+      (1, Vector(3.0, 2.0, 1.0)),
+      (2, Vector(2.0, 1.0, 5.0))
+    )).saveToCassandra("wongnai", "item_features", SomeColumns("item_id", "features"))
+
+    sparkContext.parallelize(Seq(
+      (1, 1, 2.0),
+      (1, 2, 3.0),
+      (1, 4, 5.0),
+      (2, 1, 3.0),
+      (2, 4, 1.0)
+    )).saveToCassandra("wongnai", "recommendation", SomeColumns("user_id", "item_id", "score"))
+
+//    (1, 1, 12.0),
+//    (1, 2, 25.0)
+
+    val modelReader =
+      new CassandraModelReader(sparkContext, "wongnai", "recommendation")
+
+    val predictions = modelReader.getPredictions(userId = 1, itemIds = List(1, 2))
+
+
+    predictions should contain theSameElementsAs Array(
+      (1, 1, 2.0),
+      (1, 2, 3.0)
+    )
+  }
 }

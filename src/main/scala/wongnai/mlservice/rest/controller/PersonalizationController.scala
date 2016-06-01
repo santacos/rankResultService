@@ -19,9 +19,9 @@ object PersonalizationController {
 
   var alsParamGrid: ALSParamGrid = ALSParamGrid(
     maxIter = Array(20),
-    rank = Array(20),
-    alpha = Array(0.01, 0.1, 0.5),
-    regParam = Array(10.0, 100.0, 1000.0)
+    rank = Array(100, 20),
+    alpha = Array(200.0, 0.01, 0.1, 0.5),
+    regParam = Array(0.1, 10.0, 100.0, 1000.0)
   )
   var ndcgParams = NDCGParams(recommendingThreshold = 10.0, k = 2 )
   var crossValidationParams = CrossValidationParams(numFolds = 3)
@@ -48,10 +48,10 @@ object PersonalizationController {
 
     val model = new ALS()
       .setImplicitPrefs(true)
-      .setRank(100)
-      .setMaxIter(20)
-      .setAlpha(200.0)
-      .setRegParam(0.1)
+      .setRank(alsParamGrid.rank.head)
+      .setMaxIter(alsParamGrid.maxIter.head)
+      .setAlpha(alsParamGrid.alpha.head)
+      .setRegParam(alsParamGrid.regParam.head)
       .fit(dataset)
 
     val factorDFToRDD: PartialFunction[Row, (Int, Array[Double])] = {
