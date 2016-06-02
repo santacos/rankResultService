@@ -10,7 +10,6 @@ import org.apache.spark.rdd.RDD
   */
 class CassandraModelExporter(sc: SparkContext, keyspace: String, userTable: String, itemTable: String) {
   def exportModel(
-    rank: Int,
     userFactors: RDD[(Int, Array[Double])],
     itemFactors: RDD[(Int, Array[Double])]): Unit = {
 
@@ -26,10 +25,5 @@ class CassandraModelExporter(sc: SparkContext, keyspace: String, userTable: Stri
       .map(featureToVec)
       .saveToCassandra(keyspace, itemTable, SomeColumns("item_id", "features"))
   }
-
-
-
-
-
 
 }

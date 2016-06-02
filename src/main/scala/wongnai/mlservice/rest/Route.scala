@@ -10,6 +10,9 @@ import scala.concurrent.Future
   * Created by ibosz on 24/3/59.
   */
 trait Route extends JsonSupport {
+  implicit val sc = Spark.sparkContext
+  implicit val sqlc = Spark.sqlContext
+
   val route =
     path("personalize" / "rank") {
       post {

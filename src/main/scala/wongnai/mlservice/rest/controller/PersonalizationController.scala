@@ -1,12 +1,12 @@
 package wongnai.mlservice.rest.controller
 
+import org.apache.spark.SparkContext
 import org.apache.spark.ml.Model
 import org.apache.spark.ml.recommendation.ALS
 import org.apache.spark.ml.recommendation.ALS.Rating
 import org.apache.spark.ml.tuning.CrossValidatorModel
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{Row, SQLContext}
 import wongnai.mlservice.Spark
-import wongnai.mlservice.Spark._
 import wongnai.mlservice.api.searchranking.{ALSParamGrid, CrossValidationParams, NDCGParams, model}
 import wongnai.mlservice.io.{CassandraImporter, CassandraModelExporter, CassandraModelReader}
 import wongnai.mlservice.rest.PersonalizedSearchResult
@@ -30,7 +30,7 @@ object PersonalizationController {
 
   def train(sourcePath: String): Unit = {
     import Spark.sqlContext.implicits._
-    val dataset = new CassandraImporter(sparkContext, "wongnai_log", "entity_access")
+    val dataset = new CassandraImporter(Spark.sparkContext, "wongnai_log", "entity_access")
       .importData()
       .toDF("user","item","rating")
 
@@ -40,18 +40,19 @@ object PersonalizationController {
     dataset.unpersist()
   }
 
-  def trainWithoutEval(sourcePath: String): Unit = {
-    import Spark.sqlContext.implicits._
+  def trainWithoutEval(sourcePath: String)(implicit sparkContext: SparkContext, sqlContext: SQLContext): Unit = {
+    import sqlContext.implicits._
+
     val dataset = new CassandraImporter(sparkContext, "wongnai_log", "entity_access")
       .importData()
       .toDF("user","item","rating")
 
     val model = new ALS()
       .setImplicitPrefs(true)
-      .setRank(alsParamGrid.rank.head)
-      .setMaxIter(alsParamGrid.maxIter.head)
-      .setAlpha(alsParamGrid.alpha.head)
-      .setRegParam(alsParamGrid.regParam.head)
+      .setRank(100)
+      .setMaxIter(20)
+      .setAlpha(200.0)
+      .setRegParam(0.1)
       .fit(dataset)
 
     val factorDFToRDD: PartialFunction[Row, (Int, Array[Double])] = {
@@ -59,19 +60,18 @@ object PersonalizationController {
     }
 
     new CassandraModelExporter(sparkContext, "wongnai", "user_features", "item_features")
-        .exportModel(
-          model.rank,
-          model.userFactors.map(factorDFToRDD),
-          model.itemFactors.map(factorDFToRDD))
+      .exportModel(
+        model.userFactors.map(factorDFToRDD),
+        model.itemFactors.map(factorDFToRDD))
   }
 
   def rank(user: Int, items: List[Int]): PersonalizedSearchResult = {
-    val scoredItems = new CassandraModelReader(sparkContext, "wongnai", "recommendation")
+    val scoredItems = new CassandraModelReader(Spark.sparkContext, "wongnai", "recommendation")
         .getPredictions(user, items)
         .map{ case (user: Int, item: Int, score: Double) => Rating(user, item, score.toFloat) }
 
     val positiveItems = scoredItems
-      .filter(_.rating > 0)
+//      .filter(_.rating > 0)
       .sortBy(- _.rating)
       .map(_.item)
 

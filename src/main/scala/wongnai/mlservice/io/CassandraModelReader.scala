@@ -5,7 +5,6 @@ import com.github.fommil.netlib.BLAS.{getInstance => blas}
 import org.apache.spark.SparkContext
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Try, Success}
 
 /**
   * Created by ibosz on 17/5/59.

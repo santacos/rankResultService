@@ -4,4 +4,4 @@ jar_path='./target/scala-2.10/ResultRankingService-assembly-1.0.jar'
 key_path='/Users/macbookair/Downloads/ssh-boss'
 
 echo "uploading jar..."
-scp -i $key_path $jar_path 'root@panjit.wongnai.com:recommendation/spark-recommendation.jar'
+scp -i $key_path $jar_path 'root@panjit.wongnai.com:/tmp/recommendation/spark-recommendation.jar'

@@ -54,7 +54,7 @@ class CassandraModelExporterTest extends FunSuite with BeforeAndAfterEach with M
       (5, Array(2.0, 1.0, 2.0))
     ))
 
-    exporter.exportModel(rank = 3, userFactors, itemFactors)
+    exporter.exportModel(userFactors, itemFactors)
 
     val recommendationTable = sparkContext
       .cassandraTable("wongnai", "user_features").collect
@@ -89,7 +89,7 @@ class CassandraModelExporterTest extends FunSuite with BeforeAndAfterEach with M
       (5, Array(2.0, 1.0, 2.0))
     ))
 
-    exporter.exportModel(rank = 3, userFactors, itemFactors)
+    exporter.exportModel(userFactors, itemFactors)
 
     val recommendationTable = sparkContext
       .cassandraTable("wongnai", "item_features").collect
