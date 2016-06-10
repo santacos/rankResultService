@@ -6,8 +6,8 @@
 
 
 Algorithm ที่ใช้ในการสร้าง model
-ALS - alternating least square
-http://bugra.github.io/work/notes/2014-04-19/alternating-least-squares-method-for-collaborative-filtering/ 
+{ALS - alternating least square}
+(http://bugra.github.io/work/notes/2014-04-19/alternating-least-squares-method-for-collaborative-filtering/ )
 Matrix factorization
  - https://www.youtube.com/watch?v=o8PiWO8C3zs
 	Gradient descent
