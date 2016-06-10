@@ -19,7 +19,7 @@ Algorithm ที่ใช้ในการสร้าง model
 Metric ที่ใช้ในการวัดผล
 	RMSE - root mean square error
 	NDCG	- https://www.youtube.com/watch?v=qm1In7NH8WE
-Sampling data สุ่มข้อมูลมาใช้วัดผล
+	Sampling data สุ่มข้อมูลมาใช้วัดผล
 
 Spark
 	MLlib
